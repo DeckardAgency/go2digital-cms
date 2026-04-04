@@ -1,0 +1,134 @@
+<aside
+  class="fixed left-0 top-0 h-screen flex z-40 transition-all duration-300"
+  [class.w-[70px]]="layoutService.sidebarCollapsed() && !selectedModule()"
+  [class.w-[280px]]="!layoutService.sidebarCollapsed() || selectedModule()"
+  (mouseleave)="onSidebarLeave()">
+
+  <!-- Icon Rail -->
+  <div class="w-[70px] h-full bg-white dark:bg-zinc-900 flex flex-col border-r border-zinc-200 dark:border-zinc-800 flex-shrink-0">
+    <!-- Logo -->
+    <div class="h-14 flex items-center justify-center border-b border-zinc-200 dark:border-zinc-800">
+      <div class="w-9 h-9 bg-zinc-900 dark:bg-white rounded-xl flex items-center justify-center">
+        <span class="text-white dark:text-zinc-900 font-bold text-sm">G2D</span>
+      </div>
+    </div>
+
+    <!-- Module Icons -->
+    <nav class="flex-1 py-2 overflow-y-auto">
+      <div class="flex flex-col items-center gap-3">
+        @for (module of navigationService.modules; track module.id) {
+          <button
+            type="button"
+            class="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200"
+            [ngClass]="{
+              'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900': isModuleActive(module),
+              'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800': !isModuleActive(module)
+            }"
+            [pTooltip]="layoutService.sidebarCollapsed() && !selectedModule() ? module.label : ''"
+            tooltipPosition="right"
+            (click)="onModuleClick(module)"
+            (mouseenter)="onModuleHover(module)">
+            <i [class]="module.icon" class="text-lg"></i>
+          </button>
+        }
+      </div>
+    </nav>
+
+    <!-- Bottom Section -->
+    <div class="py-4 border-t border-zinc-200 dark:border-zinc-800">
+      <div class="flex flex-col gap-2 px-2">
+        <!-- Theme Toggle -->
+        <div class="flex justify-center">
+          <p-button
+            [icon]="themeService.isDark() ? 'pi pi-sun' : 'pi pi-moon'"
+            [rounded]="true"
+            [text]="true"
+            severity="secondary"
+            pTooltip="Toggle theme"
+            tooltipPosition="right"
+            (onClick)="themeService.toggleTheme()" />
+        </div>
+
+        <!-- User Avatar -->
+        <div class="relative">
+          <button
+            type="button"
+            class="w-full h-12 rounded-xl flex items-center justify-center hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            (click)="userMenu.toggle($event)">
+            @if (userInitials()) {
+              <p-avatar
+                [label]="userInitials()"
+                shape="circle"
+                styleClass="!w-9 !h-9 !text-sm !bg-zinc-900 dark:!bg-white !text-white dark:!text-zinc-900" />
+            } @else {
+              <p-avatar
+                icon="pi pi-user"
+                shape="circle"
+                styleClass="!w-9 !h-9 !text-sm !bg-zinc-900 dark:!bg-white !text-white dark:!text-zinc-900" />
+            }
+          </button>
+          <p-menu #userMenu [model]="userMenuItems" [popup]="true" appendTo="body" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Submenu Panel -->
+  @if (!layoutService.sidebarCollapsed() || selectedModule()) {
+    <div class="w-[210px] h-full bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex flex-col overflow-hidden">
+      @if (displayedModule(); as module) {
+        <!-- Module Header -->
+        <div class="h-14 px-4 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-700">
+          <h2 class="font-semibold text-zinc-900 dark:text-zinc-100 text-lg">{{ module.label }}</h2>
+          @if (!layoutService.sidebarCollapsed()) {
+            <button
+              type="button"
+              class="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              pTooltip="Collapse"
+              tooltipPosition="top"
+              (click)="toggleCollapsed()">
+              <i class="pi pi-angle-double-left text-sm"></i>
+            </button>
+          }
+        </div>
+
+        <!-- Submenu Items -->
+        <nav class="flex-1 p-3 overflow-y-auto">
+          <div class="space-y-1">
+            @for (item of module.children; track item.route) {
+              <a
+                [routerLink]="item.route"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors no-underline"
+                [ngClass]="{
+                  'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400': isItemActive(item),
+                  'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100': !isItemActive(item)
+                }">
+                <i [class]="item.icon" class="text-base w-5"></i>
+                <span class="font-medium text-sm">{{ item.label }}</span>
+              </a>
+            }
+          </div>
+        </nav>
+      } @else {
+        <div class="flex-1 flex items-center justify-center p-4">
+          <div class="text-center text-zinc-400">
+            <i class="pi pi-arrow-left text-2xl mb-2"></i>
+            <p class="text-sm m-0">Select a module</p>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Expand Button -->
+  @if (layoutService.sidebarCollapsed() && !selectedModule()) {
+    <button
+      type="button"
+      class="absolute top-20 -right-3 w-6 h-6 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 rounded-full flex items-center justify-center text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 shadow-sm transition-colors"
+      pTooltip="Expand"
+      tooltipPosition="right"
+      (click)="toggleCollapsed()">
+      <i class="pi pi-angle-right text-xs"></i>
+    </button>
+  }
+</aside>

@@ -1,0 +1,76 @@
+/* CSS Layers for proper specificity */
+@layer tailwind-base, primeng, tailwind-utilities;
+
+/* Tailwind Base */
+@layer tailwind-base {
+  @tailwind base;
+}
+
+/* Tailwind Utilities */
+@layer tailwind-utilities {
+  @tailwind components;
+  @tailwind utilities;
+}
+
+/* PrimeIcons */
+@import "primeicons/primeicons.css";
+
+/* Root Variables */
+:root {
+  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Global Styles */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-family);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Background colors based on theme */
+body {
+  background-color: #f4f4f5;
+  color: #18181b;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.dark body,
+body.dark,
+html.dark body {
+  background-color: #09090b;
+  color: #fafafa;
+}
+
+/* Links */
+a {
+  text-decoration: none;
+  color: var(--p-primary-color);
+}
+
+a:hover {
+  text-decoration: underline;
+  color: var(--primary-hover-color);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--p-surface-300);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--p-surface-400);
+}
