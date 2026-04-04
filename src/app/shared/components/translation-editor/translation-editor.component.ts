@@ -8,6 +8,7 @@ import { TabPanels } from 'primeng/tabs';
 import { TabPanel } from 'primeng/tabs';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
+import { EditorModule } from 'primeng/editor';
 
 interface TranslationField {
   key: string;
@@ -33,6 +34,7 @@ interface Translations {
     TabPanel,
     InputTextModule,
     TextareaModule,
+    EditorModule,
   ],
   template: `
     <p-tabs [value]="0">
@@ -78,14 +80,39 @@ interface Translations {
                     </textarea>
                   }
                   @case ('richtext') {
-                    <textarea
-                      pTextarea
-                      class="w-full"
-                      [rows]="8"
+                    <p-editor
                       [ngModel]="translations.hr[field.key]"
                       (ngModelChange)="onFieldChange('hr', field.key, $event)"
-                      placeholder="Rich text editor (Quill) will be added here">
-                    </textarea>
+                      [style]="{ height: '250px' }">
+                      <ng-template pTemplate="header">
+                        <span class="ql-formats">
+                          <select class="ql-header">
+                            <option value="1">Heading 1</option>
+                            <option value="2">Heading 2</option>
+                            <option value="3">Heading 3</option>
+                            <option selected>Normal</option>
+                          </select>
+                        </span>
+                        <span class="ql-formats">
+                          <button type="button" class="ql-bold"></button>
+                          <button type="button" class="ql-italic"></button>
+                          <button type="button" class="ql-underline"></button>
+                          <button type="button" class="ql-strike"></button>
+                        </span>
+                        <span class="ql-formats">
+                          <button type="button" class="ql-list" value="ordered"></button>
+                          <button type="button" class="ql-list" value="bullet"></button>
+                        </span>
+                        <span class="ql-formats">
+                          <button type="button" class="ql-link"></button>
+                          <button type="button" class="ql-blockquote"></button>
+                          <button type="button" class="ql-code-block"></button>
+                        </span>
+                        <span class="ql-formats">
+                          <button type="button" class="ql-clean"></button>
+                        </span>
+                      </ng-template>
+                    </p-editor>
                   }
                 }
               </div>
@@ -119,14 +146,39 @@ interface Translations {
                     </textarea>
                   }
                   @case ('richtext') {
-                    <textarea
-                      pTextarea
-                      class="w-full"
-                      [rows]="8"
+                    <p-editor
                       [ngModel]="translations.en[field.key]"
                       (ngModelChange)="onFieldChange('en', field.key, $event)"
-                      placeholder="Rich text editor (Quill) will be added here">
-                    </textarea>
+                      [style]="{ height: '250px' }">
+                      <ng-template pTemplate="header">
+                        <span class="ql-formats">
+                          <select class="ql-header">
+                            <option value="1">Heading 1</option>
+                            <option value="2">Heading 2</option>
+                            <option value="3">Heading 3</option>
+                            <option selected>Normal</option>
+                          </select>
+                        </span>
+                        <span class="ql-formats">
+                          <button type="button" class="ql-bold"></button>
+                          <button type="button" class="ql-italic"></button>
+                          <button type="button" class="ql-underline"></button>
+                          <button type="button" class="ql-strike"></button>
+                        </span>
+                        <span class="ql-formats">
+                          <button type="button" class="ql-list" value="ordered"></button>
+                          <button type="button" class="ql-list" value="bullet"></button>
+                        </span>
+                        <span class="ql-formats">
+                          <button type="button" class="ql-link"></button>
+                          <button type="button" class="ql-blockquote"></button>
+                          <button type="button" class="ql-code-block"></button>
+                        </span>
+                        <span class="ql-formats">
+                          <button type="button" class="ql-clean"></button>
+                        </span>
+                      </ng-template>
+                    </p-editor>
                   }
                 }
               </div>
