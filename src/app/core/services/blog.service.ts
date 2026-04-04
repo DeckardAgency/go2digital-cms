@@ -73,6 +73,20 @@ export class BlogService {
     );
   }
 
+  uploadImage(postId: string, file: File): Observable<{ success: boolean; imageUrl: string }> {
+    this._isLoading.set(true);
+    const formData = new FormData();
+    formData.append('image', file);
+
+    return this.http.post<{ success: boolean; imageUrl: string }>(
+      `${this.apiUrl}/blog-posts/${postId}/image`, formData
+    ).pipe(finalize(() => this._isLoading.set(false)));
+  }
+
+  removeImage(postId: string): Observable<{ success: boolean }> {
+    return this.http.delete<{ success: boolean }>(`${this.apiUrl}/blog-posts/${postId}/image`);
+  }
+
   // --- Blog Categories ---
 
   getCategories(): Observable<BlogCategory[]> {

@@ -12,6 +12,7 @@ import { TranslationEditorComponent } from '../../../shared/components/translati
 import { ImageUploadComponent } from '../../../shared/components/image-upload/image-upload.component';
 import { LabService } from '../../../core/services/lab.service';
 import { LabCategory } from '../../../core/models/lab.model';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-lab-project-form',
@@ -127,10 +128,17 @@ import { LabCategory } from '../../../core/models/lab.model';
           <!-- Featured Image Card -->
           <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
             <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Featured Image</h2>
-            <app-image-upload
-              [currentImageUrl]="imageUrl()"
-              (onUpload)="onImageUpload($event)"
-              (onRemove)="onImageRemove()" />
+            @if (isEditMode()) {
+              <app-image-upload
+                [currentImageUrl]="imageUrl()"
+                [uploading]="isUploadingImage()"
+                (onUpload)="uploadImage($event)"
+                (onRemove)="removeImage()" />
+            } @else {
+              <p class="text-sm text-surface-500 dark:text-surface-400">
+                Save the project first, then you can upload an image.
+              </p>
+            }
           </div>
 
           <!-- Info Card (edit mode only) -->
@@ -182,9 +190,9 @@ export class LabProjectFormComponent implements OnInit {
   selectedCategoryIds: string[] = [];
   allCategories = signal<LabCategory[]>([]);
   imageUrl = signal('');
+  isUploadingImage = signal(false);
   createdAt = signal('');
   updatedAt = signal('');
-  private imageFile: File | null = null;
 
   translationFields = [
     { key: 'title', label: 'Title', type: 'text' as const },
@@ -240,7 +248,12 @@ export class LabProjectFormComponent implements OnInit {
         }
 
         if (project.image) {
-          this.imageUrl.set(typeof project.image === 'string' ? project.image : project.image.url || '');
+          const img = project.image;
+          if (typeof img === 'object' && img.path) {
+            this.imageUrl.set(this.getFullImageUrl('/storage/media/' + img.path));
+          } else if (typeof img === 'string') {
+            this.imageUrl.set(img);
+          }
         }
 
         if ((project as any).createdAt) {
@@ -257,14 +270,43 @@ export class LabProjectFormComponent implements OnInit {
     });
   }
 
-  onImageUpload(file: File): void {
-    this.imageFile = file;
-    this.imageUrl.set(URL.createObjectURL(file));
+  uploadImage(file: File): void {
+    const id = this.projectId();
+    if (!id) return;
+
+    this.isUploadingImage.set(true);
+    this.labService.uploadImage(id, file).subscribe({
+      next: (res) => {
+        this.imageUrl.set(this.getFullImageUrl(res.imageUrl));
+        this.isUploadingImage.set(false);
+        this.messageService.add({ severity: 'success', summary: 'Image uploaded' });
+      },
+      error: () => {
+        this.isUploadingImage.set(false);
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to upload image' });
+      }
+    });
   }
 
-  onImageRemove(): void {
-    this.imageFile = null;
-    this.imageUrl.set('');
+  removeImage(): void {
+    const id = this.projectId();
+    if (!id) return;
+
+    this.labService.removeImage(id).subscribe({
+      next: () => {
+        this.imageUrl.set('');
+        this.messageService.add({ severity: 'info', summary: 'Image removed' });
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to remove image' });
+      }
+    });
+  }
+
+  private getFullImageUrl(path: string): string {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    return environment.apiUrl.replace('/api', '') + path;
   }
 
   onSave(): void {

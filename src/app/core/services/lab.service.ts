@@ -73,6 +73,20 @@ export class LabService {
     );
   }
 
+  uploadImage(projectId: string, file: File): Observable<{ success: boolean; imageUrl: string }> {
+    this._isLoading.set(true);
+    const formData = new FormData();
+    formData.append('image', file);
+
+    return this.http.post<{ success: boolean; imageUrl: string }>(
+      `${this.apiUrl}/lab-projects/${projectId}/image`, formData
+    ).pipe(finalize(() => this._isLoading.set(false)));
+  }
+
+  removeImage(projectId: string): Observable<{ success: boolean }> {
+    return this.http.delete<{ success: boolean }>(`${this.apiUrl}/lab-projects/${projectId}/image`);
+  }
+
   // --- Lab Categories ---
 
   getCategories(): Observable<LabCategory[]> {
