@@ -11,108 +11,153 @@ import { MessageService } from 'primeng/api';
 import { TranslationEditorComponent } from '../../../shared/components/translation-editor/translation-editor.component';
 import { ImageUploadComponent } from '../../../shared/components/image-upload/image-upload.component';
 import { LabService } from '../../../core/services/lab.service';
-import { LabProject, LabCategory } from '../../../core/models/lab.model';
+import { LabCategory } from '../../../core/models/lab.model';
 
 @Component({
   selector: 'app-lab-project-form',
   standalone: true,
   imports: [
-    CommonModule,
-    FormsModule,
-    InputTextModule,
-    SelectModule,
-    CheckboxModule,
-    ButtonModule,
-    TranslationEditorComponent,
-    ImageUploadComponent,
+    CommonModule, FormsModule, InputTextModule, SelectModule,
+    CheckboxModule, ButtonModule, TranslationEditorComponent, ImageUploadComponent,
   ],
   template: `
-    <div class="max-w-4xl">
+    <div class="space-y-6">
       <!-- Header -->
-      <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <p-button
             icon="pi pi-arrow-left"
             severity="secondary"
             [text]="true"
+            [rounded]="true"
             (onClick)="router.navigate(['/lab/projects'])" />
-          <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">
-            {{ isEditMode() ? 'Edit Project' : 'New Project' }}
-          </h1>
+          <div>
+            <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">
+              {{ isEditMode() ? 'Edit Project' : 'New Project' }}
+            </h1>
+            <p class="text-surface-500 dark:text-surface-400 text-sm mt-0.5">
+              {{ isEditMode() ? 'Update lab project details' : 'Create a new lab project' }}
+            </p>
+          </div>
         </div>
-        <p-button
-          label="Save"
-          icon="pi pi-check"
-          [loading]="labService.isLoading()"
-          (onClick)="onSave()" />
-      </div>
-
-      <!-- Translations -->
-      <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-5 mb-5">
-        <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Content</h2>
-        <app-translation-editor
-          [translations]="translations()"
-          [fields]="translationFields"
-          (translationsChange)="translations.set($event)" />
-      </div>
-
-      <!-- Meta Fields -->
-      <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-5 mb-5">
-        <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Details</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Slug -->
-          <div class="flex flex-col gap-2">
-            <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Slug</label>
-            <input pInputText class="w-full" [(ngModel)]="slug" />
-          </div>
-
-          <!-- Status -->
-          <div class="flex flex-col gap-2">
-            <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Status</label>
-            <p-select
-              [options]="statusOptions"
-              [(ngModel)]="status"
-              optionLabel="label"
-              optionValue="value"
-              class="w-full" />
-          </div>
-
-          <!-- Featured -->
-          <div class="flex items-end gap-2 pb-2">
-            <p-checkbox [(ngModel)]="featured" [binary]="true" inputId="featured" />
-            <label for="featured" class="text-sm font-medium text-surface-700 dark:text-surface-300">Featured project</label>
-          </div>
+        <div class="flex items-center gap-2">
+          @if (isEditMode() && status === 'published') {
+            <p-button
+              label="Unpublish"
+              icon="pi pi-eye-slash"
+              severity="secondary"
+              [outlined]="true"
+              (onClick)="status = 'draft'; onSave()" />
+          }
+          <p-button
+            label="Save"
+            icon="pi pi-save"
+            [loading]="labService.isLoading()"
+            (onClick)="onSave()" />
         </div>
       </div>
 
-      <!-- Categories -->
-      <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-5 mb-5">
-        <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Categories</h2>
-        <div class="flex flex-wrap gap-4">
-          @for (cat of allCategories(); track cat.id) {
-            <div class="flex items-center gap-2">
-              <p-checkbox
-                [value]="cat.id"
-                [(ngModel)]="selectedCategoryIds"
-                [inputId]="'cat-' + cat.id" />
-              <label [for]="'cat-' + cat.id" class="text-sm font-medium text-surface-700 dark:text-surface-300">
-                {{ cat.translations?.hr?.name || cat.slug }}
-              </label>
+      <!-- Two-column layout -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- LEFT: Content (2/3 width) -->
+        <div class="lg:col-span-2 space-y-6">
+          <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+            <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-5">Content</h2>
+            <app-translation-editor
+              [translations]="translations()"
+              [fields]="translationFields"
+              (translationsChange)="translations.set($event)" />
+          </div>
+        </div>
+
+        <!-- RIGHT: Sidebar (1/3 width) -->
+        <div class="space-y-6">
+
+          <!-- Settings Card -->
+          <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+            <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-5">Settings</h2>
+            <div class="flex flex-col gap-4">
+              <!-- Status -->
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Status</label>
+                <p-select
+                  [options]="statusOptions"
+                  [(ngModel)]="status"
+                  optionLabel="label"
+                  optionValue="value"
+                  class="w-full" />
+              </div>
+
+              <!-- Featured -->
+              <div class="flex items-center gap-2 pt-1">
+                <p-checkbox [(ngModel)]="featured" [binary]="true" inputId="featured" />
+                <label for="featured" class="text-sm font-medium text-surface-700 dark:text-surface-300">Featured project</label>
+              </div>
+
+              <!-- Slug -->
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Slug</label>
+                <input pInputText class="w-full" [(ngModel)]="slug" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Categories Card -->
+          <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+            <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Categories</h2>
+            <div class="flex flex-col gap-3">
+              @for (cat of allCategories(); track cat.id) {
+                <div class="flex items-center gap-2">
+                  <p-checkbox
+                    [value]="cat.id"
+                    [(ngModel)]="selectedCategoryIds"
+                    [inputId]="'cat-' + cat.id" />
+                  <label [for]="'cat-' + cat.id" class="text-sm font-medium text-surface-700 dark:text-surface-300">
+                    {{ cat.translations?.hr?.name || cat.slug }}
+                  </label>
+                </div>
+              }
+              @if (!allCategories().length) {
+                <span class="text-surface-400 text-sm">No categories available</span>
+              }
+            </div>
+          </div>
+
+          <!-- Featured Image Card -->
+          <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+            <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Featured Image</h2>
+            <app-image-upload
+              [currentImageUrl]="imageUrl()"
+              (onUpload)="onImageUpload($event)"
+              (onRemove)="onImageRemove()" />
+          </div>
+
+          <!-- Info Card (edit mode only) -->
+          @if (isEditMode()) {
+            <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+              <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Info</h2>
+              <div class="flex flex-col gap-3 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-surface-500 dark:text-surface-400">Status</span>
+                  <span class="font-medium text-surface-900 dark:text-surface-0 capitalize">{{ status }}</span>
+                </div>
+                @if (createdAt()) {
+                  <div class="flex justify-between">
+                    <span class="text-surface-500 dark:text-surface-400">Created</span>
+                    <span class="font-medium text-surface-900 dark:text-surface-0">{{ createdAt() }}</span>
+                  </div>
+                }
+                @if (updatedAt()) {
+                  <div class="flex justify-between">
+                    <span class="text-surface-500 dark:text-surface-400">Updated</span>
+                    <span class="font-medium text-surface-900 dark:text-surface-0">{{ updatedAt() }}</span>
+                  </div>
+                }
+              </div>
             </div>
           }
-          @if (!allCategories().length) {
-            <span class="text-surface-400 text-sm">No categories available</span>
-          }
         </div>
-      </div>
-
-      <!-- Image -->
-      <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-5 mb-5">
-        <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Image</h2>
-        <app-image-upload
-          [currentImageUrl]="imageUrl()"
-          (onUpload)="onImageUpload($event)"
-          (onRemove)="onImageRemove()" />
       </div>
     </div>
   `,
@@ -137,13 +182,15 @@ export class LabProjectFormComponent implements OnInit {
   selectedCategoryIds: string[] = [];
   allCategories = signal<LabCategory[]>([]);
   imageUrl = signal('');
+  createdAt = signal('');
+  updatedAt = signal('');
   private imageFile: File | null = null;
 
   translationFields = [
     { key: 'title', label: 'Title', type: 'text' as const },
     { key: 'shortTitle', label: 'Short Title', type: 'text' as const },
     { key: 'subtitle', label: 'Subtitle', type: 'text' as const },
-    { key: 'body', label: 'Body', type: 'richtext' as const },
+    { key: 'body', label: 'Content', type: 'richtext' as const },
   ];
 
   statusOptions = [
@@ -153,7 +200,6 @@ export class LabProjectFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadCategories();
-
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.isEditMode.set(true);
@@ -164,9 +210,7 @@ export class LabProjectFormComponent implements OnInit {
 
   private loadCategories(): void {
     this.labService.getCategories().subscribe({
-      next: (categories) => {
-        this.allCategories.set(categories);
-      },
+      next: (categories) => this.allCategories.set(categories),
     });
   }
 
@@ -197,6 +241,13 @@ export class LabProjectFormComponent implements OnInit {
 
         if (project.image) {
           this.imageUrl.set(typeof project.image === 'string' ? project.image : project.image.url || '');
+        }
+
+        if ((project as any).createdAt) {
+          this.createdAt.set(new Date((project as any).createdAt).toLocaleString());
+        }
+        if ((project as any).updatedAt) {
+          this.updatedAt.set(new Date((project as any).updatedAt).toLocaleString());
         }
       },
       error: () => {
@@ -234,7 +285,7 @@ export class LabProjectFormComponent implements OnInit {
         this.messageService.add({
           severity: 'success',
           summary: 'Success',
-          detail: this.isEditMode() ? 'Project updated successfully' : 'Project created successfully',
+          detail: this.isEditMode() ? 'Project updated' : 'Project created',
         });
         this.router.navigate(['/lab/projects']);
       },

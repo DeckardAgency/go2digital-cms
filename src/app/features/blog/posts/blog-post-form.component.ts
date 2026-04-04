@@ -12,113 +12,164 @@ import { MessageService } from 'primeng/api';
 import { TranslationEditorComponent } from '../../../shared/components/translation-editor/translation-editor.component';
 import { ImageUploadComponent } from '../../../shared/components/image-upload/image-upload.component';
 import { BlogService } from '../../../core/services/blog.service';
-import { BlogPost, BlogCategory } from '../../../core/models/blog.model';
 
 @Component({
   selector: 'app-blog-post-form',
   standalone: true,
   imports: [
-    CommonModule,
-    FormsModule,
-    InputTextModule,
-    SelectModule,
-    DatePickerModule,
-    CheckboxModule,
-    ButtonModule,
-    TranslationEditorComponent,
-    ImageUploadComponent,
+    CommonModule, FormsModule, InputTextModule, SelectModule,
+    DatePickerModule, CheckboxModule, ButtonModule,
+    TranslationEditorComponent, ImageUploadComponent,
   ],
   template: `
-    <div class="max-w-4xl">
+    <div class="space-y-6">
       <!-- Header -->
-      <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <p-button
             icon="pi pi-arrow-left"
             severity="secondary"
             [text]="true"
+            [rounded]="true"
             (onClick)="router.navigate(['/blog/posts'])" />
-          <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">
-            {{ isEditMode() ? 'Edit Post' : 'New Post' }}
-          </h1>
+          <div>
+            <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">
+              {{ isEditMode() ? 'Edit Post' : 'New Post' }}
+            </h1>
+            <p class="text-surface-500 dark:text-surface-400 text-sm mt-0.5">
+              {{ isEditMode() ? 'Update blog post details' : 'Create a new blog post' }}
+            </p>
+          </div>
         </div>
-        <p-button
-          label="Save"
-          icon="pi pi-check"
-          [loading]="blogService.isLoading()"
-          (onClick)="onSave()" />
-      </div>
-
-      <!-- Translations -->
-      <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-5 mb-5">
-        <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Content</h2>
-        <app-translation-editor
-          [translations]="translations()"
-          [fields]="translationFields"
-          (translationsChange)="translations.set($event)" />
-      </div>
-
-      <!-- Meta Fields -->
-      <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-5 mb-5">
-        <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Details</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Slug -->
-          <div class="flex flex-col gap-2">
-            <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Slug</label>
-            <input pInputText class="w-full" [(ngModel)]="slug" />
-          </div>
-
-          <!-- Author -->
-          <div class="flex flex-col gap-2">
-            <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Author</label>
-            <input pInputText class="w-full" [(ngModel)]="author" />
-          </div>
-
-          <!-- Date -->
-          <div class="flex flex-col gap-2">
-            <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Date</label>
-            <p-datepicker [(ngModel)]="date" dateFormat="yy-mm-dd" [showIcon]="true" class="w-full" />
-          </div>
-
-          <!-- Status -->
-          <div class="flex flex-col gap-2">
-            <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Status</label>
-            <p-select
-              [options]="statusOptions"
-              [(ngModel)]="status"
-              optionLabel="label"
-              optionValue="value"
-              class="w-full" />
-          </div>
-
-          <!-- Category -->
-          <div class="flex flex-col gap-2">
-            <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Category</label>
-            <p-select
-              [options]="categoryOptions()"
-              [(ngModel)]="categoryId"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Select category"
-              [showClear]="true"
-              class="w-full" />
-          </div>
-
-          <!-- Featured -->
-          <div class="flex items-end gap-2 pb-2">
-            <p-checkbox [(ngModel)]="featured" [binary]="true" inputId="featured" />
-            <label for="featured" class="text-sm font-medium text-surface-700 dark:text-surface-300">Featured post</label>
-          </div>
+        <div class="flex items-center gap-2">
+          @if (isEditMode() && status === 'published') {
+            <p-button
+              label="Unpublish"
+              icon="pi pi-eye-slash"
+              severity="secondary"
+              [outlined]="true"
+              (onClick)="status = 'draft'; onSave()" />
+          }
+          <p-button
+            label="Save"
+            icon="pi pi-save"
+            [loading]="blogService.isLoading()"
+            (onClick)="onSave()" />
         </div>
       </div>
 
-      <!-- Image -->
-      <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-5 mb-5">
-        <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Image</h2>
-        <app-image-upload
-          [currentImageUrl]="imageUrl()"
-          (onUpload)="onImageUpload($event)"
-          (onRemove)="onImageRemove()" />
+      <!-- Two-column layout -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- LEFT: Content (2/3 width) -->
+        <div class="lg:col-span-2 space-y-6">
+
+          <!-- Content Card -->
+          <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+            <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-5">Content</h2>
+            <app-translation-editor
+              [translations]="translations()"
+              [fields]="translationFields"
+              (translationsChange)="translations.set($event)" />
+          </div>
+
+        </div>
+
+        <!-- RIGHT: Sidebar (1/3 width) -->
+        <div class="space-y-6">
+
+          <!-- Settings Card -->
+          <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+            <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-5">Settings</h2>
+            <div class="flex flex-col gap-4">
+              <!-- Category -->
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Category</label>
+                <p-select
+                  [options]="categoryOptions()"
+                  [(ngModel)]="categoryId"
+                  optionLabel="label"
+                  optionValue="value"
+                  placeholder="Select category"
+                  [showClear]="true"
+                  class="w-full" />
+              </div>
+
+              <!-- Status -->
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Status</label>
+                <p-select
+                  [options]="statusOptions"
+                  [(ngModel)]="status"
+                  optionLabel="label"
+                  optionValue="value"
+                  class="w-full" />
+              </div>
+
+              <!-- Featured -->
+              <div class="flex items-center gap-2 pt-1">
+                <p-checkbox [(ngModel)]="featured" [binary]="true" inputId="featured" />
+                <label for="featured" class="text-sm font-medium text-surface-700 dark:text-surface-300">Featured post</label>
+              </div>
+
+              <!-- Date -->
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Date</label>
+                <p-datepicker [(ngModel)]="date" dateFormat="yy-mm-dd" [showIcon]="true" class="w-full" />
+              </div>
+
+              <!-- Author -->
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Author</label>
+                <input pInputText class="w-full" [(ngModel)]="author" />
+              </div>
+
+              <!-- Slug -->
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Slug</label>
+                <input pInputText class="w-full" [(ngModel)]="slug" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Featured Image Card -->
+          <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+            <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Featured Image</h2>
+            <app-image-upload
+              [currentImageUrl]="imageUrl()"
+              (onUpload)="onImageUpload($event)"
+              (onRemove)="onImageRemove()" />
+          </div>
+
+          <!-- Info Card (edit mode only) -->
+          @if (isEditMode()) {
+            <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+              <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Info</h2>
+              <div class="flex flex-col gap-3 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-surface-500 dark:text-surface-400">Status</span>
+                  <span class="font-medium text-surface-900 dark:text-surface-0 capitalize">{{ status }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-surface-500 dark:text-surface-400">Author</span>
+                  <span class="font-medium text-surface-900 dark:text-surface-0">{{ author }}</span>
+                </div>
+                @if (createdAt()) {
+                  <div class="flex justify-between">
+                    <span class="text-surface-500 dark:text-surface-400">Created</span>
+                    <span class="font-medium text-surface-900 dark:text-surface-0">{{ createdAt() }}</span>
+                  </div>
+                }
+                @if (updatedAt()) {
+                  <div class="flex justify-between">
+                    <span class="text-surface-500 dark:text-surface-400">Updated</span>
+                    <span class="font-medium text-surface-900 dark:text-surface-0">{{ updatedAt() }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
       </div>
     </div>
   `,
@@ -144,12 +195,14 @@ export class BlogPostFormComponent implements OnInit {
   featured = false;
   categoryId: string | null = null;
   imageUrl = signal('');
+  createdAt = signal('');
+  updatedAt = signal('');
   private imageFile: File | null = null;
 
   translationFields = [
     { key: 'title', label: 'Title', type: 'text' as const },
     { key: 'excerpt', label: 'Excerpt', type: 'textarea' as const },
-    { key: 'body', label: 'Body', type: 'richtext' as const },
+    { key: 'body', label: 'Content', type: 'richtext' as const },
   ];
 
   statusOptions = [
@@ -161,7 +214,6 @@ export class BlogPostFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadCategories();
-
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.isEditMode.set(true);
@@ -203,6 +255,13 @@ export class BlogPostFormComponent implements OnInit {
         if (post.image) {
           this.imageUrl.set(typeof post.image === 'string' ? post.image : post.image.url || '');
         }
+
+        if ((post as any).createdAt) {
+          this.createdAt.set(new Date((post as any).createdAt).toLocaleString());
+        }
+        if ((post as any).updatedAt) {
+          this.updatedAt.set(new Date((post as any).updatedAt).toLocaleString());
+        }
       },
       error: () => {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load post' });
@@ -222,9 +281,7 @@ export class BlogPostFormComponent implements OnInit {
   }
 
   onSave(): void {
-    const formattedDate = this.date
-      ? this.date.toISOString().split('T')[0]
-      : null;
+    const formattedDate = this.date ? this.date.toISOString().split('T')[0] : null;
 
     const payload: any = {
       slug: this.slug,
@@ -245,7 +302,7 @@ export class BlogPostFormComponent implements OnInit {
         this.messageService.add({
           severity: 'success',
           summary: 'Success',
-          detail: this.isEditMode() ? 'Post updated successfully' : 'Post created successfully',
+          detail: this.isEditMode() ? 'Post updated' : 'Post created',
         });
         this.router.navigate(['/blog/posts']);
       },
