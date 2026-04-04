@@ -6,7 +6,8 @@ import { TagModule } from 'primeng/tag';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
+import { MenuModule } from 'primeng/menu';
 
 import {
   DataTableWrapperComponent,
@@ -35,6 +36,7 @@ import { NavigationAdminService } from '../../core/services/navigation-admin.ser
     DataTableHeaderActionsDirective,
     DataTableRowActionsDirective,
     DataTableFilterMenuDirective,
+    MenuModule,
   ],
   providers: [ConfirmationService],
   template: `
@@ -93,22 +95,13 @@ import { NavigationAdminService } from '../../core/services/navigation-admin.ser
       </ng-template>
 
       <ng-template dtRowActions let-row>
-        <div class="flex items-center justify-end gap-1">
-          <p-button
-            icon="pi pi-pencil"
-            severity="secondary"
-            [text]="true"
-            size="small"
-            pTooltip="Edit"
-            (onClick)="router.navigate(['/navigation', row.id])" />
-          <p-button
-            icon="pi pi-trash"
-            severity="danger"
-            [text]="true"
-            size="small"
-            pTooltip="Delete"
-            (onClick)="confirmDelete(row)" />
-        </div>
+        <p-button
+          icon="pi pi-ellipsis-v"
+          [text]="true"
+          [rounded]="true"
+          severity="secondary"
+          (onClick)="setCurrentRow(row); rowMenu.toggle($event)" />
+        <p-menu #rowMenu [model]="rowMenuItems" [popup]="true" appendTo="body" />
       </ng-template>
     </app-data-table-wrapper>
 
@@ -124,6 +117,21 @@ export class NavItemListComponent implements OnInit {
   items = signal<any[]>([]);
   totalRecords = signal(0);
   filterChips = signal<FilterChip[]>([]);
+
+  currentRow: any = null;
+  rowMenuItems: MenuItem[] = [
+    {
+      label: 'Edit',
+      icon: 'pi pi-pencil',
+      command: () => this.router.navigate(['/navigation', this.currentRow?.id])
+    },
+    {
+      label: 'Delete',
+      icon: 'pi pi-trash',
+      styleClass: 'text-red-500',
+      command: () => this.confirmDelete(this.currentRow)
+    }
+  ];
 
   filterGroup: string | null = null;
 
@@ -179,6 +187,10 @@ export class NavItemListComponent implements OnInit {
     this.filterGroup = null;
     this.updateFilterChips();
     this.loadItems();
+  }
+
+  setCurrentRow(row: any): void {
+    this.currentRow = row;
   }
 
   confirmDelete(item: any): void {

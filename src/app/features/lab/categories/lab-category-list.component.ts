@@ -4,7 +4,8 @@ import { Router } from '@angular/router';
 import { TagModule } from 'primeng/tag';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ButtonModule } from 'primeng/button';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
+import { MenuModule } from 'primeng/menu';
 
 import {
   DataTableWrapperComponent,
@@ -28,6 +29,7 @@ import { LabCategory } from '../../../core/models/lab.model';
     DataTableCellDirective,
     DataTableHeaderActionsDirective,
     DataTableRowActionsDirective,
+    MenuModule,
   ],
   providers: [ConfirmationService],
   template: `
@@ -64,22 +66,13 @@ import { LabCategory } from '../../../core/models/lab.model';
 
       <!-- Row Actions -->
       <ng-template dtRowActions let-row>
-        <div class="flex items-center justify-end gap-1">
-          <p-button
-            icon="pi pi-pencil"
-            severity="secondary"
-            [text]="true"
-            size="small"
-            pTooltip="Edit"
-            (onClick)="router.navigate(['/lab/categories', row.id])" />
-          <p-button
-            icon="pi pi-trash"
-            severity="danger"
-            [text]="true"
-            size="small"
-            pTooltip="Delete"
-            (onClick)="confirmDelete(row)" />
-        </div>
+        <p-button
+          icon="pi pi-ellipsis-v"
+          [text]="true"
+          [rounded]="true"
+          severity="secondary"
+          (onClick)="setCurrentRow(row); rowMenu.toggle($event)" />
+        <p-menu #rowMenu [model]="rowMenuItems" [popup]="true" appendTo="body" />
       </ng-template>
     </app-data-table-wrapper>
 
@@ -94,6 +87,21 @@ export class LabCategoryListComponent implements OnInit {
 
   categories = signal<LabCategory[]>([]);
   loading = signal(false);
+
+  currentRow: any = null;
+  rowMenuItems: MenuItem[] = [
+    {
+      label: 'Edit',
+      icon: 'pi pi-pencil',
+      command: () => this.router.navigate(['/lab/categories', this.currentRow?.id])
+    },
+    {
+      label: 'Delete',
+      icon: 'pi pi-trash',
+      styleClass: 'text-red-500',
+      command: () => this.confirmDelete(this.currentRow)
+    }
+  ];
 
   columns: DataTableColumn[] = [
     { key: 'name', label: 'Name', defaultVisible: true },
@@ -122,6 +130,10 @@ export class LabCategoryListComponent implements OnInit {
 
   onRowClick(row: LabCategory): void {
     this.router.navigate(['/lab/categories', row.id]);
+  }
+
+  setCurrentRow(row: any): void {
+    this.currentRow = row;
   }
 
   confirmDelete(category: LabCategory): void {

@@ -4,7 +4,8 @@ import { Router } from '@angular/router';
 import { TagModule } from 'primeng/tag';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ButtonModule } from 'primeng/button';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
+import { MenuModule } from 'primeng/menu';
 
 import {
   DataTableWrapperComponent,
@@ -28,6 +29,7 @@ import { ContactService } from '../../core/services/contact.service';
     DataTableCellDirective,
     DataTableHeaderActionsDirective,
     DataTableRowActionsDirective,
+    MenuModule,
   ],
   providers: [ConfirmationService],
   template: `
@@ -56,22 +58,13 @@ import { ContactService } from '../../core/services/contact.service';
       </ng-template>
 
       <ng-template dtRowActions let-row>
-        <div class="flex items-center justify-end gap-1">
-          <p-button
-            icon="pi pi-pencil"
-            severity="secondary"
-            [text]="true"
-            size="small"
-            pTooltip="Edit"
-            (onClick)="router.navigate(['/contact/social', row.id])" />
-          <p-button
-            icon="pi pi-trash"
-            severity="danger"
-            [text]="true"
-            size="small"
-            pTooltip="Delete"
-            (onClick)="confirmDelete(row)" />
-        </div>
+        <p-button
+          icon="pi pi-ellipsis-v"
+          [text]="true"
+          [rounded]="true"
+          severity="secondary"
+          (onClick)="setCurrentRow(row); rowMenu.toggle($event)" />
+        <p-menu #rowMenu [model]="rowMenuItems" [popup]="true" appendTo="body" />
       </ng-template>
     </app-data-table-wrapper>
 
@@ -83,6 +76,21 @@ export class SocialLinkListComponent implements OnInit {
   readonly router = inject(Router);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
+
+  currentRow: any = null;
+  rowMenuItems: MenuItem[] = [
+    {
+      label: 'Edit',
+      icon: 'pi pi-pencil',
+      command: () => this.router.navigate(['/contact/social', this.currentRow?.id])
+    },
+    {
+      label: 'Delete',
+      icon: 'pi pi-trash',
+      styleClass: 'text-red-500',
+      command: () => this.confirmDelete(this.currentRow)
+    }
+  ];
 
   items = signal<any[]>([]);
   totalRecords = signal(0);
@@ -116,6 +124,10 @@ export class SocialLinkListComponent implements OnInit {
 
   onRowClick(row: any): void {
     this.router.navigate(['/contact/social', row.id]);
+  }
+
+  setCurrentRow(row: any): void {
+    this.currentRow = row;
   }
 
   confirmDelete(item: any): void {

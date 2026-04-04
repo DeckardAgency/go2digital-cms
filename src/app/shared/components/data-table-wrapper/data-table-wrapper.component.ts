@@ -9,10 +9,14 @@ import {
   signal,
   computed,
   TemplateRef,
+  OnInit,
+  OnDestroy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TableModule, TableLazyLoadEvent } from 'primeng/table';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
@@ -48,273 +52,231 @@ import { exportToCsv } from './data-table-wrapper.utils';
     Skeleton,
   ],
   template: `
-    <!-- Header -->
-    <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700">
-      <div class="p-5 pb-0">
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0">{{ title }}</h2>
-            @if (subtitle) {
-              <p class="text-sm text-surface-500 dark:text-surface-400 mt-1">{{ subtitle }}</p>
-            }
-          </div>
-          <div class="flex items-center gap-2">
-            @if (headerActionsTemplate) {
-              <ng-container *ngTemplateOutlet="headerActionsTemplate"></ng-container>
-            }
-          </div>
+    <!-- Header: Title + Header Actions (OUTSIDE the card) -->
+    <div class="space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">{{ title }}</h1>
+          @if (subtitle) {
+            <p class="text-surface-500 dark:text-surface-400 mt-1">{{ subtitle }}</p>
+          }
         </div>
-
-        <!-- Toolbar -->
-        <div class="flex flex-wrap items-center gap-3 pb-4">
-          <!-- Bulk Actions -->
-          @if (showSelection && selectedRows.length > 0 && bulkActions.length > 0) {
-            <div class="flex items-center gap-2">
-              <span class="text-sm text-surface-500">{{ selectedRows.length }} selected</span>
-              @for (action of bulkActions; track action.value) {
-                <p-button
-                  [label]="action.label"
-                  [icon]="action.icon || ''"
-                  severity="secondary"
-                  size="small"
-                  (onClick)="bulkAction.emit(action.value)" />
-              }
-            </div>
-          }
-
-          <!-- Filter Chips -->
-          @if (filterChips.length > 0) {
-            <div class="flex items-center gap-2 flex-wrap">
-              @for (chip of filterChips; track chip.key) {
-                <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium">
-                  {{ chip.label }}
-                  <button
-                    class="ml-1 hover:text-primary-700 cursor-pointer"
-                    (click)="filterChipRemove.emit(chip.key)">
-                    <i class="pi pi-times text-[10px]"></i>
-                  </button>
-                </span>
-              }
-              <button
-                class="text-xs text-surface-500 hover:text-surface-700 cursor-pointer"
-                (click)="filtersClear.emit()">
-                Clear all
-              </button>
-            </div>
-          }
-
-          <div class="flex-1"></div>
-
-          <!-- Search -->
-          <div class="relative">
-            <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 text-sm"></i>
-            <input
-              pInputText
-              type="text"
-              [placeholder]="searchPlaceholder"
-              class="pl-9 w-64"
-              [ngModel]="searchValue()"
-              (ngModelChange)="onSearchChange($event)" />
-          </div>
-
-          <!-- Filter Menu Button -->
-          @if (filterMenuTemplate) {
-            <p-button
-              icon="pi pi-filter"
-              severity="secondary"
-              [outlined]="true"
-              pTooltip="Filters"
-              tooltipPosition="top"
-              (onClick)="showFilterMenu = !showFilterMenu" />
-          }
-
-          <!-- Refresh -->
-          <p-button
-            icon="pi pi-refresh"
-            severity="secondary"
-            [outlined]="true"
-            pTooltip="Refresh"
-            tooltipPosition="top"
-            (onClick)="refresh.emit()" />
-
-          <!-- Export -->
-          @if (showExport) {
-            <p-button
-              icon="pi pi-download"
-              severity="secondary"
-              [outlined]="true"
-              pTooltip="Export CSV"
-              tooltipPosition="top"
-              (onClick)="onExport()" />
+        <div class="flex items-center gap-2">
+          @if (headerActionsTemplate) {
+            <ng-container *ngTemplateOutlet="headerActionsTemplate"></ng-container>
           }
         </div>
       </div>
 
-      <!-- Filter Menu Overlay -->
-      @if (showFilterMenu && filterMenuTemplate) {
-        <div class="px-5 pb-4">
-          <div class="p-4 bg-surface-50 dark:bg-surface-800 rounded-lg border border-surface-200 dark:border-surface-700">
-            <ng-container *ngTemplateOutlet="filterMenuTemplate"></ng-container>
+      <!-- Table Card -->
+      <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700">
+
+        <!-- Toolbar: single row -->
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 p-3 border-b border-surface-200 dark:border-surface-700">
+
+          <!-- Left: Bulk actions + filter chips -->
+          <div class="flex items-center gap-2 flex-wrap">
+            @if (showSelection && selectedRows.length > 0 && bulkActions.length > 0) {
+              <p-select
+                [options]="bulkActions"
+                optionLabel="label"
+                optionValue="value"
+                [placeholder]="'Bulk Actions (' + selectedRows.length + ')'"
+                (onChange)="onBulkActionSelect($event.value)"
+                [style]="{ minWidth: '180px' }"
+                styleClass="p-select-sm" />
+            }
+
+            @for (chip of filterChips; track chip.key) {
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-surface-100 dark:bg-surface-800 text-surface-700 dark:text-surface-300 border border-surface-200 dark:border-surface-700">
+                {{ chip.label }}
+                <i class="pi pi-times text-[10px] cursor-pointer hover:text-red-500" (click)="filterChipRemove.emit(chip.key)"></i>
+              </span>
+            }
           </div>
-        </div>
-      }
 
-      <!-- Table -->
-      <p-table
-        [value]="data"
-        [lazy]="true"
-        [paginator]="false"
-        [rows]="pageSize"
-        [totalRecords]="totalRecords"
-        [loading]="loading"
-        [dataKey]="dataKey"
-        [sortField]="currentState().sortField"
-        [sortOrder]="currentState().sortOrder === 'asc' ? 1 : -1"
-        [selection]="selectedRows"
-        [selectionMode]="showSelection ? 'multiple' : undefined"
-        (selectionChange)="selectedRows = $any($event)"
-        (onLazyLoad)="onLazyLoad($event)"
-        [tableStyle]="{ 'min-width': '100%' }"
-        styleClass="p-datatable-sm">
+          <!-- Right: Search, Filter, Export, Refresh, Pagination -->
+          <div class="flex items-center gap-2">
+            <input
+              type="text"
+              pInputText
+              [ngModel]="searchTerm()"
+              (ngModelChange)="onSearchInput($event)"
+              [placeholder]="searchPlaceholder"
+              class="w-48 lg:w-56 text-sm" />
 
-        <!-- Header -->
-        <ng-template #header>
-          <tr>
-            @if (showSelection) {
-              <th class="w-12">
-                <p-checkbox
-                  [ngModel]="allSelected()"
-                  [binary]="true"
-                  (ngModelChange)="toggleSelectAll($event)" />
-              </th>
-            }
-            @for (col of visibleColumns(); track col.key) {
-              <th
-                [pSortableColumn]="col.sortField || col.key"
-                [style.width]="col.width || 'auto'"
-                [style.text-align]="col.align || 'left'"
-                [class.frozen-column]="col.frozen">
-                {{ col.label }}
-                <p-sortIcon [field]="col.sortField || col.key" />
-              </th>
-            }
-            @if (rowActionsTemplate) {
-              <th class="w-24 text-right">Actions</th>
-            }
-          </tr>
-        </ng-template>
-
-        <!-- Body -->
-        <ng-template #body let-row let-ri="rowIndex">
-          <tr
-            class="cursor-pointer hover:bg-surface-50 dark:hover:bg-surface-800 transition-colors"
-            (click)="rowClick.emit(row)">
-            @if (showSelection) {
-              <td (click)="$event.stopPropagation()">
-                <p-checkbox
-                  [ngModel]="isSelected(row)"
-                  [binary]="true"
-                  (ngModelChange)="toggleRowSelection(row)" />
-              </td>
-            }
-            @for (col of visibleColumns(); track col.key) {
-              <td
-                [style.text-align]="col.align || 'left'"
-                [class.frozen-column]="col.frozen">
-                @if (getCellTemplate(col.key); as tmpl) {
-                  <ng-container *ngTemplateOutlet="tmpl; context: { $implicit: row, row: row }"></ng-container>
-                } @else {
-                  {{ row[col.key] }}
-                }
-              </td>
-            }
-            @if (rowActionsTemplate) {
-              <td class="text-right" (click)="$event.stopPropagation()">
-                <ng-container *ngTemplateOutlet="rowActionsTemplate; context: { $implicit: row, row: row }"></ng-container>
-              </td>
-            }
-          </tr>
-        </ng-template>
-
-        <!-- Loading -->
-        <ng-template #loadingbody>
-          @for (i of skeletonRows; track i) {
-            <tr>
-              @if (showSelection) { <td><p-skeleton width="1.5rem" height="1.5rem" /></td> }
-              @for (col of visibleColumns(); track col.key) {
-                <td><p-skeleton></p-skeleton></td>
-              }
-              @if (rowActionsTemplate) { <td><p-skeleton width="4rem" /></td> }
-            </tr>
-          }
-        </ng-template>
-
-        <!-- Empty -->
-        <ng-template #emptymessage>
-          <tr>
-            <td [attr.colspan]="totalColumns()" class="text-center py-16">
-              <div class="flex flex-col items-center gap-3">
-                <i [class]="'pi ' + emptyState.icon + ' text-4xl text-surface-300 dark:text-surface-600'"></i>
-                <div>
-                  <p class="text-surface-700 dark:text-surface-300 font-medium">{{ emptyState.title }}</p>
-                  <p class="text-sm text-surface-500 dark:text-surface-400 mt-1">
-                    {{ hasActiveFilters() ? emptyState.messageFiltered : emptyState.messageEmpty }}
-                  </p>
-                </div>
-                @if (!hasActiveFilters() && emptyState.createLabel) {
-                  <p-button
-                    [label]="emptyState.createLabel"
-                    icon="pi pi-plus"
-                    size="small"
-                    (onClick)="create.emit()" />
-                }
-                @if (hasActiveFilters()) {
-                  <p-button
-                    label="Clear filters"
-                    icon="pi pi-filter-slash"
-                    severity="secondary"
-                    size="small"
-                    (onClick)="filtersClear.emit()" />
+            @if (filterMenuTemplate) {
+              <div class="relative" #filterHost>
+                <p-button
+                  icon="pi pi-filter"
+                  [text]="true"
+                  [rounded]="true"
+                  severity="secondary"
+                  pTooltip="Filters"
+                  tooltipPosition="bottom"
+                  [badge]="filterChips.length > 0 ? filterChips.length.toString() : undefined"
+                  badgeSeverity="primary"
+                  (onClick)="filterMenuOpen = !filterMenuOpen" />
+                @if (filterMenuOpen) {
+                  <div class="absolute right-0 top-full mt-1 z-50 bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-lg shadow-lg min-w-[220px] py-1">
+                    <ng-container *ngTemplateOutlet="filterMenuTemplate"></ng-container>
+                  </div>
                 }
               </div>
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
+            }
 
-      <!-- Footer -->
-      <div class="flex items-center justify-between px-5 py-3 border-t border-surface-200 dark:border-surface-700">
-        <span class="text-sm text-surface-500 dark:text-surface-400">
-          @if (totalRecords > 0) {
-            Showing {{ rangeStart() }}–{{ rangeEnd() }} of {{ totalRecords }} {{ entityName }}
-          } @else {
-            No {{ entityName }}
-          }
-        </span>
-        <div class="flex items-center gap-2">
-          <p-button
-            icon="pi pi-chevron-left"
-            severity="secondary"
-            [outlined]="true"
-            size="small"
-            [disabled]="currentState().page <= 1"
-            (onClick)="goToPage(currentState().page - 1)" />
-          <span class="text-sm text-surface-700 dark:text-surface-300 px-2">
-            Page {{ currentState().page }} of {{ totalPages() }}
-          </span>
-          <p-button
-            icon="pi pi-chevron-right"
-            severity="secondary"
-            [outlined]="true"
-            size="small"
-            [disabled]="currentState().page >= totalPages()"
-            (onClick)="goToPage(currentState().page + 1)" />
+            @if (showExport) {
+              <p-button
+                icon="pi pi-download"
+                [text]="true"
+                [rounded]="true"
+                severity="secondary"
+                pTooltip="Export CSV"
+                tooltipPosition="bottom"
+                (onClick)="onExport()" />
+            }
+
+            <div class="w-px h-6 bg-surface-200 dark:bg-surface-700"></div>
+
+            <p-button
+              icon="pi pi-refresh"
+              [text]="true"
+              [rounded]="true"
+              severity="secondary"
+              pTooltip="Refresh"
+              tooltipPosition="bottom"
+              (onClick)="refresh.emit()" />
+
+            <!-- Pagination (in toolbar) -->
+            <div class="flex items-center gap-1 text-sm text-surface-600 dark:text-surface-400">
+              <p-button
+                icon="pi pi-chevron-left"
+                [text]="true"
+                [rounded]="true"
+                severity="secondary"
+                [disabled]="currentPage() <= 1"
+                (onClick)="goToPage(currentPage() - 1)"
+                size="small" />
+              <span class="whitespace-nowrap text-xs">Page {{ currentPage() }} of {{ totalPagesCount() }}</span>
+              <p-button
+                icon="pi pi-chevron-right"
+                [text]="true"
+                [rounded]="true"
+                severity="secondary"
+                [disabled]="currentPage() >= totalPagesCount()"
+                (onClick)="goToPage(currentPage() + 1)"
+                size="small" />
+            </div>
+          </div>
         </div>
+
+        <!-- Table -->
+        <p-table
+          [value]="data"
+          [lazy]="true"
+          (onLazyLoad)="onLazyLoad($event)"
+          [rows]="pageSize"
+          [totalRecords]="totalRecords"
+          [rowHover]="true"
+          [dataKey]="dataKey"
+          [(selection)]="selectedRows"
+          styleClass="p-datatable-sm"
+          [sortField]="sortField"
+          [sortOrder]="sortOrderNum">
+
+          <!-- Header -->
+          <ng-template pTemplate="header">
+            <tr>
+              @if (showSelection) {
+                <th style="width: 3rem"><p-tableHeaderCheckbox /></th>
+              }
+              @for (col of visibleCols(); track col.key) {
+                <th
+                  [pSortableColumn]="col.sortField ?? undefined"
+                  [class.text-center]="col.align === 'center'"
+                  [class.text-right]="col.align === 'right'"
+                  [style.width]="col.width || null">
+                  {{ col.label }}
+                  @if (col.sortField) {
+                    <p-sortIcon [field]="col.sortField" />
+                  }
+                </th>
+              }
+              @if (rowActionsTemplate) {
+                <th style="width: 4rem"></th>
+              }
+            </tr>
+          </ng-template>
+
+          <!-- Body -->
+          <ng-template pTemplate="body" let-row let-index="rowIndex">
+            <tr class="cursor-pointer" (click)="rowClick.emit(row)">
+              @if (showSelection) {
+                <td (click)="$event.stopPropagation()">
+                  <p-tableCheckbox [value]="row" />
+                </td>
+              }
+              @for (col of visibleCols(); track col.key) {
+                <td
+                  [class.text-center]="col.align === 'center'"
+                  [class.text-right]="col.align === 'right'">
+                  @if (cellTemplateMap.get(col.key); as cellTpl) {
+                    <ng-container *ngTemplateOutlet="cellTpl; context: { $implicit: row, index: index }"></ng-container>
+                  } @else {
+                    {{ row[col.key] }}
+                  }
+                </td>
+              }
+              @if (rowActionsTemplate) {
+                <td (click)="$event.stopPropagation()">
+                  <ng-container *ngTemplateOutlet="rowActionsTemplate; context: { $implicit: row }"></ng-container>
+                </td>
+              }
+            </tr>
+          </ng-template>
+
+          <!-- Empty State -->
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td [attr.colspan]="totalColSpan()" class="text-center py-16">
+                <div class="flex flex-col items-center gap-3">
+                  <div class="w-16 h-16 rounded-full bg-surface-100 dark:bg-surface-800 flex items-center justify-center">
+                    <i class="{{ emptyState.icon }} text-3xl text-surface-400"></i>
+                  </div>
+                  <div>
+                    <p class="font-medium text-surface-700 dark:text-surface-300">{{ emptyState.title }}</p>
+                    <p class="text-sm text-surface-500 mt-1">
+                      {{ filterChips.length > 0 || searchTerm() ? emptyState.messageFiltered : emptyState.messageEmpty }}
+                    </p>
+                  </div>
+                  @if (filterChips.length > 0 || searchTerm()) {
+                    <p-button label="Clear Filters" icon="pi pi-filter-slash" [outlined]="true" (onClick)="filtersClear.emit()" />
+                  } @else if (emptyState.createLabel) {
+                    <p-button [label]="emptyState.createLabel" icon="pi pi-plus" (onClick)="create.emit()" />
+                  }
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+
+          <!-- Footer Summary -->
+          <ng-template pTemplate="summary">
+            <div class="flex items-center justify-between text-sm text-surface-500 dark:text-surface-400 px-4 py-3">
+              <span>Showing {{ showingFrom() }} to {{ showingTo() }} of {{ totalRecords }} {{ entityName }}</span>
+              @if (showSelection && selectedRows.length > 0) {
+                <span>{{ selectedRows.length }} selected</span>
+              }
+            </div>
+          </ng-template>
+        </p-table>
       </div>
     </div>
   `,
+  host: {
+    '(document:click)': 'onDocumentClick($event)'
+  }
 })
-export class DataTableWrapperComponent implements AfterContentInit {
+export class DataTableWrapperComponent implements OnInit, OnDestroy, AfterContentInit {
   // Inputs
   @Input() title = '';
   @Input() subtitle = '';
@@ -326,10 +288,10 @@ export class DataTableWrapperComponent implements AfterContentInit {
   @Input() dataKey = 'id';
   @Input() pageSize = 20;
   @Input() emptyState: EmptyStateConfig = {
-    icon: 'pi-inbox',
+    icon: 'pi pi-inbox',
     title: 'No items found',
-    messageFiltered: 'Try adjusting your filters',
-    messageEmpty: 'Get started by creating your first item',
+    messageFiltered: 'Try adjusting your search or filter criteria.',
+    messageEmpty: 'Get started by creating your first item.',
   };
   @Input() filterChips: FilterChip[] = [];
   @Input() bulkActions: BulkAction[] = [];
@@ -339,7 +301,7 @@ export class DataTableWrapperComponent implements AfterContentInit {
 
   // Outputs
   @Output() stateChange = new EventEmitter<DataTableState>();
-  @Output() bulkAction = new EventEmitter<string>();
+  @Output() bulkAction = new EventEmitter<{ action: string; selected: any[] }>();
   @Output() filterChipRemove = new EventEmitter<string>();
   @Output() filtersClear = new EventEmitter<void>();
   @Output() rowClick = new EventEmitter<any>();
@@ -347,127 +309,124 @@ export class DataTableWrapperComponent implements AfterContentInit {
   @Output() create = new EventEmitter<void>();
 
   // Content children
-  @ContentChildren(DataTableCellDirective) cellTemplates!: QueryList<DataTableCellDirective>;
-  @ContentChildren(DataTableHeaderActionsDirective) headerActions!: QueryList<DataTableHeaderActionsDirective>;
-  @ContentChildren(DataTableRowActionsDirective) rowActions!: QueryList<DataTableRowActionsDirective>;
-  @ContentChildren(DataTableFilterMenuDirective) filterMenus!: QueryList<DataTableFilterMenuDirective>;
+  @ContentChildren(DataTableCellDirective) cellDirectives!: QueryList<DataTableCellDirective>;
+  @ContentChildren(DataTableHeaderActionsDirective) headerActionsDirs!: QueryList<DataTableHeaderActionsDirective>;
+  @ContentChildren(DataTableRowActionsDirective) rowActionsDirs!: QueryList<DataTableRowActionsDirective>;
+  @ContentChildren(DataTableFilterMenuDirective) filterMenuDirs!: QueryList<DataTableFilterMenuDirective>;
 
-  // Internal state
+  // Template references
   headerActionsTemplate: TemplateRef<any> | null = null;
   rowActionsTemplate: TemplateRef<any> | null = null;
   filterMenuTemplate: TemplateRef<any> | null = null;
-  showFilterMenu = false;
-  selectedRows: any[] = [];
-  private cellTemplateMap = new Map<string, TemplateRef<any>>();
-  private searchDebounce: any;
+  cellTemplateMap = new Map<string, TemplateRef<any>>();
 
-  searchValue = signal('');
-  currentState = signal<DataTableState>({
-    page: 1,
-    pageSize: 20,
-    sortField: '',
-    sortOrder: 'asc',
-    search: '',
+  // State
+  searchTerm = signal('');
+  selectedRows: any[] = [];
+  sortField = '';
+  sortOrderNum = 1;
+  filterMenuOpen = false;
+
+  currentPage = signal(1);
+
+  private searchSubject = new Subject<string>();
+  private searchSub!: Subscription;
+
+  visibleCols = computed(() => this.columns.filter(c => c.defaultVisible));
+
+  totalPagesCount = computed(() => Math.max(1, Math.ceil(this.totalRecords / this.pageSize)));
+
+  showingFrom = computed(() => {
+    if (this.totalRecords === 0) return 0;
+    return (this.currentPage() - 1) * this.pageSize + 1;
   });
 
-  visibleColumns = computed(() =>
-    this.columns.filter(c => c.defaultVisible)
-  );
+  showingTo = computed(() => Math.min(this.currentPage() * this.pageSize, this.totalRecords));
 
-  totalColumns = computed(() => {
-    let count = this.visibleColumns().length;
+  totalColSpan = computed(() => {
+    let count = this.visibleCols().length;
     if (this.showSelection) count++;
     if (this.rowActionsTemplate) count++;
     return count;
   });
 
-  totalPages = computed(() =>
-    Math.max(1, Math.ceil(this.totalRecords / this.currentState().pageSize))
-  );
+  ngOnInit(): void {
+    this.searchSub = this.searchSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged()
+    ).subscribe(() => {
+      this.currentPage.set(1);
+      this.emitStateChange();
+    });
+  }
 
-  rangeStart = computed(() => {
-    const state = this.currentState();
-    return (state.page - 1) * state.pageSize + 1;
-  });
-
-  rangeEnd = computed(() => {
-    const state = this.currentState();
-    return Math.min(state.page * state.pageSize, this.totalRecords);
-  });
-
-  allSelected = computed(() =>
-    this.data.length > 0 && this.selectedRows.length === this.data.length
-  );
-
-  skeletonRows = Array.from({ length: 5 }, (_, i) => i);
+  ngOnDestroy(): void {
+    this.searchSub?.unsubscribe();
+  }
 
   ngAfterContentInit(): void {
-    this.cellTemplates.forEach(t => this.cellTemplateMap.set(t.columnKey, t.templateRef));
-    this.cellTemplates.changes.subscribe(() => {
+    this.cellDirectives.forEach(d => this.cellTemplateMap.set(d.columnKey, d.templateRef));
+    this.cellDirectives.changes.subscribe(() => {
       this.cellTemplateMap.clear();
-      this.cellTemplates.forEach(t => this.cellTemplateMap.set(t.columnKey, t.templateRef));
+      this.cellDirectives.forEach(d => this.cellTemplateMap.set(d.columnKey, d.templateRef));
     });
 
-    if (this.headerActions.first) {
-      this.headerActionsTemplate = this.headerActions.first.templateRef;
+    if (this.headerActionsDirs.first) {
+      this.headerActionsTemplate = this.headerActionsDirs.first.templateRef;
     }
-    if (this.rowActions.first) {
-      this.rowActionsTemplate = this.rowActions.first.templateRef;
+    if (this.rowActionsDirs.first) {
+      this.rowActionsTemplate = this.rowActionsDirs.first.templateRef;
     }
-    if (this.filterMenus.first) {
-      this.filterMenuTemplate = this.filterMenus.first.templateRef;
+    if (this.filterMenuDirs.first) {
+      this.filterMenuTemplate = this.filterMenuDirs.first.templateRef;
     }
   }
 
-  getCellTemplate(key: string): TemplateRef<any> | undefined {
-    return this.cellTemplateMap.get(key);
+  onSearchInput(term: string): void {
+    this.searchTerm.set(term);
+    this.searchSubject.next(term);
   }
 
-  hasActiveFilters(): boolean {
-    return this.filterChips.length > 0 || this.searchValue().length > 0;
-  }
-
-  onSearchChange(value: string): void {
-    this.searchValue.set(value);
-    clearTimeout(this.searchDebounce);
-    this.searchDebounce = setTimeout(() => {
-      this.updateState({ search: value, page: 1 });
-    }, 300);
-  }
-
-  onLazyLoad(event: TableLazyLoadEvent): void {
-    const sortField = Array.isArray(event.sortField) ? event.sortField[0] : (event.sortField || '');
-    const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
-    this.updateState({ sortField, sortOrder: sortOrder as 'asc' | 'desc' });
+  onLazyLoad(event: any): void {
+    const page = Math.floor((event.first || 0) / this.pageSize) + 1;
+    this.currentPage.set(page);
+    if (event.sortField) {
+      this.sortField = event.sortField;
+      this.sortOrderNum = event.sortOrder ?? 1;
+    }
+    this.emitStateChange();
   }
 
   goToPage(page: number): void {
-    if (page < 1 || page > this.totalPages()) return;
-    this.updateState({ page });
+    if (page < 1 || page > this.totalPagesCount()) return;
+    this.currentPage.set(page);
+    this.emitStateChange();
+  }
+
+  onBulkActionSelect(action: string): void {
+    this.bulkAction.emit({ action, selected: [...this.selectedRows] });
   }
 
   onExport(): void {
     exportToCsv(this.columns, this.data, this.entityName);
   }
 
-  toggleSelectAll(selected: boolean): void {
-    this.selectedRows = selected ? [...this.data] : [];
-  }
-
-  isSelected(row: any): boolean {
-    return this.selectedRows.some(r => r[this.dataKey] === row[this.dataKey]);
-  }
-
-  toggleRowSelection(row: any): void {
-    if (this.isSelected(row)) {
-      this.selectedRows = this.selectedRows.filter(r => r[this.dataKey] !== row[this.dataKey]);
-    } else {
-      this.selectedRows = [...this.selectedRows, row];
+  onDocumentClick(event: Event): void {
+    if (this.filterMenuOpen) {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.relative')) {
+        this.filterMenuOpen = false;
+      }
     }
   }
 
-  private updateState(partial: Partial<DataTableState>): void {
-    this.currentState.update(s => ({ ...s, ...partial }));
-    this.stateChange.emit(this.currentState());
+  private emitStateChange(): void {
+    this.stateChange.emit({
+      page: this.currentPage(),
+      pageSize: this.pageSize,
+      sortField: this.sortField,
+      sortOrder: this.sortOrderNum === 1 ? 'asc' : 'desc',
+      search: this.searchTerm(),
+    });
   }
 }

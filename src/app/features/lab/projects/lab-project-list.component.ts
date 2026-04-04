@@ -6,7 +6,8 @@ import { TagModule } from 'primeng/tag';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
+import { MenuModule } from 'primeng/menu';
 
 import {
   DataTableWrapperComponent,
@@ -36,6 +37,7 @@ import { LabProject, LabCategory } from '../../../core/models/lab.model';
     DataTableHeaderActionsDirective,
     DataTableRowActionsDirective,
     DataTableFilterMenuDirective,
+    MenuModule,
   ],
   providers: [ConfirmationService],
   template: `
@@ -124,22 +126,13 @@ import { LabProject, LabCategory } from '../../../core/models/lab.model';
 
       <!-- Row Actions -->
       <ng-template dtRowActions let-row>
-        <div class="flex items-center justify-end gap-1">
-          <p-button
-            icon="pi pi-pencil"
-            severity="secondary"
-            [text]="true"
-            size="small"
-            pTooltip="Edit"
-            (onClick)="router.navigate(['/lab/projects', row.id])" />
-          <p-button
-            icon="pi pi-trash"
-            severity="danger"
-            [text]="true"
-            size="small"
-            pTooltip="Delete"
-            (onClick)="confirmDelete(row)" />
-        </div>
+        <p-button
+          icon="pi pi-ellipsis-v"
+          [text]="true"
+          [rounded]="true"
+          severity="secondary"
+          (onClick)="setCurrentRow(row); rowMenu.toggle($event)" />
+        <p-menu #rowMenu [model]="rowMenuItems" [popup]="true" appendTo="body" />
       </ng-template>
     </app-data-table-wrapper>
 
@@ -168,6 +161,21 @@ export class LabProjectListComponent implements OnInit {
     { key: 'categories', label: 'Categories', defaultVisible: true },
     { key: 'status', label: 'Status', defaultVisible: true, width: '110px' },
     { key: 'featured', label: 'Featured', defaultVisible: true, width: '110px' },
+  ];
+
+  currentRow: any = null;
+  rowMenuItems: MenuItem[] = [
+    {
+      label: 'Edit',
+      icon: 'pi pi-pencil',
+      command: () => this.router.navigate(['/lab/projects', this.currentRow?.id])
+    },
+    {
+      label: 'Delete',
+      icon: 'pi pi-trash',
+      styleClass: 'text-red-500',
+      command: () => this.confirmDelete(this.currentRow)
+    }
   ];
 
   statusOptions = [
@@ -244,6 +252,10 @@ export class LabProjectListComponent implements OnInit {
     this.filterStatus = null;
     this.updateFilterChips();
     this.loadProjects();
+  }
+
+  setCurrentRow(row: any): void {
+    this.currentRow = row;
   }
 
   confirmDelete(project: LabProject): void {

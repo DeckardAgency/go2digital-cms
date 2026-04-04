@@ -52,16 +52,22 @@ export class NavigationService {
       id: 'homepage',
       label: 'Homepage',
       icon: 'pi pi-desktop',
-      route: '/homepage/hero',
+      route: '/homepage',
       children: [
+        { id: 'hp-overview', label: 'All Sections', icon: 'pi pi-list', route: '/homepage' },
         { id: 'hp-hero', label: 'Hero', icon: 'pi pi-star', route: '/homepage/hero' },
-        { id: 'hp-panels', label: 'Panels', icon: 'pi pi-images', route: '/homepage/panels' },
+        { id: 'hp-panels', label: 'Scroll Panels', icon: 'pi pi-arrows-h', route: '/homepage/panels' },
         { id: 'hp-why', label: 'Why Section', icon: 'pi pi-question-circle', route: '/homepage/why-section' },
+        { id: 'hp-why-cards', label: 'Why Cards', icon: 'pi pi-th-large', route: '/homepage/why-cards' },
+        { id: 'hp-custom-image', label: 'Custom Image', icon: 'pi pi-image', route: '/homepage/custom-image' },
         { id: 'hp-custom-solution', label: 'Custom Solution', icon: 'pi pi-cog', route: '/homepage/custom-solution' },
         { id: 'hp-featured-labs', label: 'Featured Labs', icon: 'pi pi-bolt', route: '/homepage/featured-labs' },
-        { id: 'hp-billboard', label: 'Billboard', icon: 'pi pi-image', route: '/homepage/billboard' },
+        { id: 'hp-human-focused', label: 'Human Focused', icon: 'pi pi-users', route: '/homepage/human-focused' },
+        { id: 'hp-text-animation', label: 'Text Animation', icon: 'pi pi-align-center', route: '/homepage/text-animation' },
+        { id: 'hp-billboard', label: 'Billboard', icon: 'pi pi-megaphone', route: '/homepage/billboard' },
         { id: 'hp-tracking', label: 'Tracking Features', icon: 'pi pi-chart-line', route: '/homepage/tracking' },
-        { id: 'hp-products', label: 'Products', icon: 'pi pi-th-large', route: '/homepage/products' }
+        { id: 'hp-rentals', label: 'Rentals Image', icon: 'pi pi-image', route: '/homepage/rentals-image' },
+        { id: 'hp-products', label: 'Products', icon: 'pi pi-box', route: '/homepage/products' }
       ]
     },
     {

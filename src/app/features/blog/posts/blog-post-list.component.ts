@@ -6,7 +6,8 @@ import { TagModule } from 'primeng/tag';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
+import { MenuModule } from 'primeng/menu';
 
 import {
   DataTableWrapperComponent,
@@ -36,6 +37,7 @@ import { BlogPost, BlogCategory } from '../../../core/models/blog.model';
     DataTableHeaderActionsDirective,
     DataTableRowActionsDirective,
     DataTableFilterMenuDirective,
+    MenuModule,
   ],
   providers: [ConfirmationService],
   template: `
@@ -118,22 +120,13 @@ import { BlogPost, BlogCategory } from '../../../core/models/blog.model';
 
       <!-- Row Actions -->
       <ng-template dtRowActions let-row>
-        <div class="flex items-center justify-end gap-1">
-          <p-button
-            icon="pi pi-pencil"
-            severity="secondary"
-            [text]="true"
-            size="small"
-            pTooltip="Edit"
-            (onClick)="router.navigate(['/blog/posts', row.id])" />
-          <p-button
-            icon="pi pi-trash"
-            severity="danger"
-            [text]="true"
-            size="small"
-            pTooltip="Delete"
-            (onClick)="confirmDelete(row)" />
-        </div>
+        <p-button
+          icon="pi pi-ellipsis-v"
+          [text]="true"
+          [rounded]="true"
+          severity="secondary"
+          (onClick)="setCurrentRow(row); rowMenu.toggle($event)" />
+        <p-menu #rowMenu [model]="rowMenuItems" [popup]="true" appendTo="body" />
       </ng-template>
     </app-data-table-wrapper>
 
@@ -163,6 +156,21 @@ export class BlogPostListComponent implements OnInit {
     { key: 'date', label: 'Date', defaultVisible: true, width: '120px' },
     { key: 'status', label: 'Status', defaultVisible: true, width: '110px' },
     { key: 'author', label: 'Author', defaultVisible: true, width: '130px' },
+  ];
+
+  currentRow: any = null;
+  rowMenuItems: MenuItem[] = [
+    {
+      label: 'Edit',
+      icon: 'pi pi-pencil',
+      command: () => this.router.navigate(['/blog/posts', this.currentRow?.id])
+    },
+    {
+      label: 'Delete',
+      icon: 'pi pi-trash',
+      styleClass: 'text-red-500',
+      command: () => this.confirmDelete(this.currentRow)
+    }
   ];
 
   statusOptions = [
@@ -239,6 +247,10 @@ export class BlogPostListComponent implements OnInit {
     this.filterStatus = null;
     this.updateFilterChips();
     this.loadPosts();
+  }
+
+  setCurrentRow(row: any): void {
+    this.currentRow = row;
   }
 
   confirmDelete(post: BlogPost): void {

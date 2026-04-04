@@ -32,7 +32,8 @@ export const routes: Routes = [
       { path: 'lab/categories', loadComponent: () => import('./features/lab/categories/lab-category-list.component').then(m => m.LabCategoryListComponent) },
       { path: 'lab/categories/new', loadComponent: () => import('./features/lab/categories/lab-category-form.component').then(m => m.LabCategoryFormComponent) },
       { path: 'lab/categories/:id', loadComponent: () => import('./features/lab/categories/lab-category-form.component').then(m => m.LabCategoryFormComponent) },
-      // Homepage — Singletons
+      // Homepage
+      { path: 'homepage', loadComponent: () => import('./features/homepage/homepage-overview.component').then(m => m.HomepageOverviewComponent) },
       { path: 'homepage/hero', loadComponent: () => import('./features/homepage/hero-editor.component').then(m => m.HeroEditorComponent) },
       { path: 'homepage/custom-solution', loadComponent: () => import('./features/homepage/custom-solution-editor.component').then(m => m.CustomSolutionEditorComponent) },
       { path: 'homepage/human-focused', loadComponent: () => import('./features/homepage/human-focused-editor.component').then(m => m.HumanFocusedEditorComponent) },
