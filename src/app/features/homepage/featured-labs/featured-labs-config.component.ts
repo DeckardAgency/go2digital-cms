@@ -76,8 +76,8 @@ interface FeaturedLabsConfig {
           <div class="p-5 border-b border-surface-200 dark:border-surface-700">
             <h3 class="font-medium text-surface-900 dark:text-surface-0">Select Projects</h3>
             <p class="text-sm text-surface-500 dark:text-surface-400 mt-1">
-              Choose up to 3 lab projects to feature on the homepage.
-              Selected: {{ selectedIds().length }}/3
+              Select which lab projects to feature on the homepage.
+              Selected: {{ selectedIds().length }}
             </p>
           </div>
 
@@ -102,7 +102,6 @@ interface FeaturedLabsConfig {
                   <p-checkbox
                     [ngModel]="isSelected(project.id)"
                     [binary]="true"
-                    [disabled]="!isSelected(project.id) && selectedIds().length >= 3"
                     (ngModelChange)="toggleProject(project.id)" />
                 </td>
                 <td>
@@ -243,7 +242,7 @@ export class FeaturedLabsConfigComponent implements OnInit {
     const current = this.selectedIds();
     if (current.includes(id)) {
       this.selectedIds.set(current.filter(i => i !== id));
-    } else if (current.length < 3) {
+    } else {
       this.selectedIds.set([...current, id]);
     }
   }
