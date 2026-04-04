@@ -49,18 +49,18 @@ export class BlogService {
 
   createPost(data: Partial<BlogPost>): Observable<BlogPost> {
     this._isLoading.set(true);
-    const headers = new HttpHeaders({ 'Content-Type': 'application/ld+json' });
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
 
-    return this.http.post<BlogPost>(`${this.apiUrl}/blog_posts`, data, { headers }).pipe(
+    return this.http.post<BlogPost>(`${this.apiUrl}/blog-posts`, data, { headers }).pipe(
       finalize(() => this._isLoading.set(false))
     );
   }
 
   updatePost(id: string, data: Partial<BlogPost>): Observable<BlogPost> {
     this._isLoading.set(true);
-    const headers = new HttpHeaders({ 'Content-Type': 'application/merge-patch+json' });
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
 
-    return this.http.patch<BlogPost>(`${this.apiUrl}/blog_posts/${id}`, data, { headers }).pipe(
+    return this.http.put<BlogPost>(`${this.apiUrl}/blog-posts/${id}`, data, { headers }).pipe(
       finalize(() => this._isLoading.set(false))
     );
   }
