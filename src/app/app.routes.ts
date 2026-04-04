@@ -54,10 +54,8 @@ export const routes: Routes = [
       { path: 'homepage/tracking', loadComponent: () => import('./features/homepage/tracking/tracking-list.component').then(m => m.TrackingListComponent) },
       { path: 'homepage/tracking/new', loadComponent: () => import('./features/homepage/tracking/tracking-form.component').then(m => m.TrackingFormComponent) },
       { path: 'homepage/tracking/:id', loadComponent: () => import('./features/homepage/tracking/tracking-form.component').then(m => m.TrackingFormComponent) },
-      // Homepage — Featured Lab Items
-      { path: 'homepage/featured-labs', loadComponent: () => import('./features/homepage/featured-labs/featured-lab-list.component').then(m => m.FeaturedLabListComponent) },
-      { path: 'homepage/featured-labs/new', loadComponent: () => import('./features/homepage/featured-labs/featured-lab-form.component').then(m => m.FeaturedLabFormComponent) },
-      { path: 'homepage/featured-labs/:id', loadComponent: () => import('./features/homepage/featured-labs/featured-lab-form.component').then(m => m.FeaturedLabFormComponent) },
+      // Homepage — Featured Labs Configuration
+      { path: 'homepage/featured-labs', loadComponent: () => import('./features/homepage/featured-labs/featured-labs-config.component').then(m => m.FeaturedLabsConfigComponent) },
       // Homepage — Products
       { path: 'homepage/products', loadComponent: () => import('./features/homepage/products/product-list.component').then(m => m.ProductListComponent) },
       { path: 'homepage/products/new', loadComponent: () => import('./features/homepage/products/product-form.component').then(m => m.ProductFormComponent) },
