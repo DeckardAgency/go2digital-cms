@@ -122,14 +122,50 @@ interface FeaturedLabsConfig {
         </div>
       }
 
-      <!-- Preview -->
+      <!-- Auto Mode: Preview of what will be shown -->
       @if (autoMode()) {
-        <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
-          <h3 class="font-medium text-surface-900 dark:text-surface-0 mb-4">Auto Preview</h3>
-          <p class="text-sm text-surface-500 dark:text-surface-400">
-            The last 3 featured (or latest) lab projects will be displayed automatically.
-            Mark projects as "featured" in the Lab Projects section to control which ones appear.
-          </p>
+        <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700">
+          <div class="p-5 border-b border-surface-200 dark:border-surface-700 flex items-center justify-between">
+            <div>
+              <h3 class="font-medium text-surface-900 dark:text-surface-0">Auto Preview</h3>
+              <p class="text-sm text-surface-500 dark:text-surface-400 mt-1">
+                These projects will appear on the homepage. Mark projects as "featured" in Lab Projects to control the selection.
+              </p>
+            </div>
+            <p-button
+              label="Manage Lab Projects"
+              icon="pi pi-external-link"
+              severity="secondary"
+              [outlined]="true"
+              size="small"
+              (onClick)="router.navigate(['/lab/projects'])" />
+          </div>
+
+          @if (previewProjects().length > 0) {
+            <div class="divide-y divide-surface-200 dark:divide-surface-700">
+              @for (project of previewProjects(); track project.id; let i = $index) {
+                <div class="flex items-center gap-4 px-5 py-4">
+                  <div class="w-8 h-8 rounded-lg bg-surface-100 dark:bg-surface-800 flex items-center justify-center text-xs font-semibold text-surface-500">
+                    {{ i + 1 }}
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="font-medium text-surface-900 dark:text-surface-0 text-sm">
+                      {{ project.title || project.shortTitle || project.slug }}
+                    </p>
+                    <p class="text-xs text-surface-500 mt-0.5">{{ project.slug }}</p>
+                  </div>
+                  <p-tag
+                    [value]="project.featured ? 'featured' : 'latest'"
+                    [severity]="project.featured ? 'success' : 'secondary'" />
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="p-8 text-center text-surface-500 dark:text-surface-400">
+              <i class="pi pi-inbox text-3xl mb-2"></i>
+              <p class="text-sm">No lab projects found. Create some in Lab Projects first.</p>
+            </div>
+          }
         </div>
       }
 
@@ -140,18 +176,21 @@ interface FeaturedLabsConfig {
 export class FeaturedLabsConfigComponent implements OnInit {
   private http = inject(HttpClient);
   private messageService = inject(MessageService);
+  router = inject(Router);
   private apiUrl = environment.apiUrl;
 
   autoMode = signal(true);
   autoModeValue = true;
   selectedIds = signal<string[]>([]);
   allProjects = signal<LabProject[]>([]);
+  previewProjects = signal<LabProject[]>([]);
   saving = signal(false);
   loading = signal(true);
 
   ngOnInit(): void {
     this.loadConfig();
     this.loadProjects();
+    this.loadPreview();
   }
 
   loadConfig(): void {
@@ -167,11 +206,27 @@ export class FeaturedLabsConfigComponent implements OnInit {
 
   loadProjects(): void {
     this.http.get<LabProject[]>(`${this.apiUrl}/lab_projects`, {
-      params: { includeTranslations: 'false', status: 'published', itemsPerPage: '50' }
+      params: { status: 'published', itemsPerPage: '50' }
     }).subscribe({
       next: (projects) => {
-        this.allProjects.set(projects);
+        this.allProjects.set(Array.isArray(projects) ? projects : []);
         this.loading.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to load lab projects:', err);
+        this.allProjects.set([]);
+        this.loading.set(false);
+      }
+    });
+  }
+
+  loadPreview(): void {
+    this.http.get<{ mode: string; projects: LabProject[] }>(`${this.apiUrl}/homepage/featured-labs`).subscribe({
+      next: (data) => {
+        this.previewProjects.set(data.projects ?? []);
+      },
+      error: () => {
+        this.previewProjects.set([]);
       }
     });
   }
