@@ -18,26 +18,20 @@ import {
   DataTableColumn,
   DataTableState,
   FilterChip,
+  BulkAction,
 } from '../../../shared/components/data-table-wrapper';
 import { BlogService, BlogPostListParams } from '../../../core/services/blog.service';
+import { MediaService } from '../../../core/services/media.service';
 import { BlogPost, BlogCategory } from '../../../core/models/blog.model';
 
 @Component({
   selector: 'app-blog-post-list',
   standalone: true,
   imports: [
-    CommonModule,
-    FormsModule,
-    TagModule,
-    ConfirmDialogModule,
-    SelectModule,
-    ButtonModule,
-    DataTableWrapperComponent,
-    DataTableCellDirective,
-    DataTableHeaderActionsDirective,
-    DataTableRowActionsDirective,
-    DataTableFilterMenuDirective,
-    MenuModule,
+    CommonModule, FormsModule, TagModule, ConfirmDialogModule, SelectModule,
+    ButtonModule, DataTableWrapperComponent, DataTableCellDirective,
+    DataTableHeaderActionsDirective, DataTableRowActionsDirective,
+    DataTableFilterMenuDirective, MenuModule,
   ],
   providers: [ConfirmationService],
   template: `
@@ -49,83 +43,68 @@ import { BlogPost, BlogCategory } from '../../../core/models/blog.model';
       [totalRecords]="totalRecords()"
       [loading]="blogService.isLoading()"
       [filterChips]="filterChips()"
+      [showSelection]="true"
+      [bulkActions]="bulkActions"
       (stateChange)="onStateChange($event)"
       (rowClick)="onRowClick($event)"
       (filterChipRemove)="onFilterChipRemove($event)"
       (filtersClear)="onFiltersClear()"
+      (bulkAction)="onBulkAction($event)"
       (refresh)="loadPosts()">
 
-      <!-- Header Actions -->
       <ng-template dtHeaderActions>
-        <p-button
-          label="New Post"
-          icon="pi pi-plus"
-          (onClick)="router.navigate(['/blog/posts/new'])" />
+        <p-button label="New Post" icon="pi pi-plus" (onClick)="router.navigate(['/blog/posts/new'])" />
       </ng-template>
 
-      <!-- Filter Menu -->
       <ng-template dtFilterMenu>
         <div class="flex flex-wrap items-end gap-4">
           <div class="flex flex-col gap-2">
             <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Category</label>
-            <p-select
-              [options]="categoryOptions()"
-              [(ngModel)]="filterCategory"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="All categories"
-              [showClear]="true"
-              class="w-48"
-              (onChange)="applyFilters()" />
+            <p-select [options]="categoryOptions()" [(ngModel)]="filterCategory" optionLabel="label" optionValue="value" placeholder="All categories" [showClear]="true" class="w-48" (onChange)="applyFilters()" />
           </div>
           <div class="flex flex-col gap-2">
             <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Status</label>
-            <p-select
-              [options]="statusOptions"
-              [(ngModel)]="filterStatus"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="All statuses"
-              [showClear]="true"
-              class="w-48"
-              (onChange)="applyFilters()" />
+            <p-select [options]="statusOptions" [(ngModel)]="filterStatus" optionLabel="label" optionValue="value" placeholder="All statuses" [showClear]="true" class="w-48" (onChange)="applyFilters()" />
           </div>
         </div>
       </ng-template>
 
-      <!-- Custom Cells -->
       <ng-template dtCell="title" let-row>
-        <span class="font-medium text-surface-900 dark:text-surface-100">
-          {{ row.translations?.hr?.title || '(no title)' }}
-        </span>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-surface-100 dark:bg-surface-800 flex items-center justify-center overflow-hidden flex-shrink-0">
+            @if (getImageUrl(row)) {
+              <img [src]="getImageUrl(row)" class="w-full h-full object-cover" />
+            } @else {
+              <i class="pi pi-image text-surface-400 text-sm"></i>
+            }
+          </div>
+          <div>
+            <span class="font-medium text-surface-900 dark:text-surface-100">{{ row.translations?.hr?.title || '(no title)' }}</span>
+            @if (row.translations?.hr?.excerpt) {
+              <p class="text-xs text-surface-400 mt-0.5 truncate max-w-xs">{{ row.translations.hr.excerpt }}</p>
+            }
+          </div>
+        </div>
       </ng-template>
 
       <ng-template dtCell="category" let-row>
         @if (row.category) {
-          <p-tag [value]="row.category.translations?.hr?.name || row.category.slug" severity="info" />
+          <p-tag [value]="getCatName(row.category)" severity="info" />
         } @else {
           <span class="text-surface-400">--</span>
         }
       </ng-template>
 
       <ng-template dtCell="status" let-row>
-        <p-tag
-          [value]="row.status"
-          [severity]="row.status === 'published' ? 'success' : 'secondary'" />
+        <p-tag [value]="row.status" [severity]="row.status === 'published' ? 'success' : 'secondary'" />
       </ng-template>
 
       <ng-template dtCell="date" let-row>
         {{ row.date | date:'dd.MM.yyyy' }}
       </ng-template>
 
-      <!-- Row Actions -->
       <ng-template dtRowActions let-row>
-        <p-button
-          icon="pi pi-ellipsis-v"
-          [text]="true"
-          [rounded]="true"
-          severity="secondary"
-          (onClick)="setCurrentRow(row); rowMenu.toggle($event)" />
+        <p-button icon="pi pi-ellipsis-v" [text]="true" [rounded]="true" severity="secondary" (onClick)="setCurrentRow(row); rowMenu.toggle($event)" />
         <p-menu #rowMenu [model]="rowMenuItems" [popup]="true" appendTo="body" />
       </ng-template>
     </app-data-table-wrapper>
@@ -135,6 +114,7 @@ import { BlogPost, BlogCategory } from '../../../core/models/blog.model';
 })
 export class BlogPostListComponent implements OnInit {
   readonly blogService = inject(BlogService);
+  readonly mediaService = inject(MediaService);
   readonly router = inject(Router);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
@@ -151,26 +131,20 @@ export class BlogPostListComponent implements OnInit {
 
   columns: DataTableColumn[] = [
     { key: 'title', label: 'Title', defaultVisible: true },
-    { key: 'slug', label: 'Slug', defaultVisible: true },
     { key: 'category', label: 'Category', defaultVisible: true },
     { key: 'date', label: 'Date', defaultVisible: true, width: '120px' },
     { key: 'status', label: 'Status', defaultVisible: true, width: '110px' },
     { key: 'author', label: 'Author', defaultVisible: true, width: '130px' },
   ];
 
+  bulkActions: BulkAction[] = [
+    { label: 'Delete selected', value: 'delete' },
+  ];
+
   currentRow: any = null;
   rowMenuItems: MenuItem[] = [
-    {
-      label: 'Edit',
-      icon: 'pi pi-pencil',
-      command: () => this.router.navigate(['/blog/posts', this.currentRow?.id])
-    },
-    {
-      label: 'Delete',
-      icon: 'pi pi-trash',
-      styleClass: 'text-red-500',
-      command: () => this.confirmDelete(this.currentRow)
-    }
+    { label: 'Edit', icon: 'pi pi-pencil', command: () => this.router.navigate(['/blog/posts', this.currentRow?.id]) },
+    { label: 'Delete', icon: 'pi pi-trash', styleClass: 'text-red-500', command: () => this.confirmDelete(this.currentRow) },
   ];
 
   statusOptions = [
@@ -186,22 +160,13 @@ export class BlogPostListComponent implements OnInit {
   }
 
   loadPosts(): void {
-    const params: BlogPostListParams = {
-      page: this.currentPage,
-      itemsPerPage: this.pageSize,
-    };
-
+    const params: BlogPostListParams = { page: this.currentPage, itemsPerPage: this.pageSize };
     if (this.filterCategory) params['category.slug'] = this.filterCategory;
     if (this.filterStatus) params.status = this.filterStatus;
 
     this.blogService.getPosts(params).subscribe({
-      next: (posts) => {
-        this.posts.set(posts);
-        this.totalRecords.set(posts.length); // API may return total in headers; adjust as needed
-      },
-      error: () => {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load posts' });
-      },
+      next: (posts) => { this.posts.set(posts); this.totalRecords.set(posts.length); },
+      error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load posts' }),
     });
   }
 
@@ -209,65 +174,67 @@ export class BlogPostListComponent implements OnInit {
     this.blogService.getCategories().subscribe({
       next: (categories) => {
         this.categories.set(categories);
-        this.categoryOptions.set(
-          categories.map(c => ({
-            label: c.translations?.hr?.name || c.slug,
-            value: c.slug,
-          }))
-        );
+        this.categoryOptions.set(categories.map(c => ({ label: c.translations?.hr?.name || c.slug, value: c.slug })));
       },
     });
   }
 
-  onStateChange(state: DataTableState): void {
-    this.currentPage = state.page;
-    this.pageSize = state.pageSize;
-    this.loadPosts();
+  onStateChange(state: DataTableState): void { this.currentPage = state.page; this.pageSize = state.pageSize; this.loadPosts(); }
+  onRowClick(row: BlogPost): void { this.router.navigate(['/blog/posts', row.id]); }
+
+  applyFilters(): void { this.currentPage = 1; this.updateFilterChips(); this.loadPosts(); }
+  onFilterChipRemove(key: string): void { if (key === 'category') this.filterCategory = null; if (key === 'status') this.filterStatus = null; this.updateFilterChips(); this.loadPosts(); }
+  onFiltersClear(): void { this.filterCategory = null; this.filterStatus = null; this.updateFilterChips(); this.loadPosts(); }
+
+  setCurrentRow(row: any): void { this.currentRow = row; }
+
+  getImageUrl(row: any): string {
+    const image = row.image;
+    if (!image) return '';
+    if (typeof image === 'object' && image.path) return this.mediaService.getMediaUrl(image.path);
+    return '';
   }
 
-  onRowClick(row: BlogPost): void {
-    this.router.navigate(['/blog/posts', row.id]);
+  getCatName(cat: any): string {
+    if (typeof cat === 'string') {
+      const id = cat.split('/').pop() || '';
+      const found = this.categories().find(c => c.id === id);
+      return found?.translations?.hr?.name || found?.slug || id;
+    }
+    return cat.translations?.hr?.name || cat.name || cat.slug || '—';
   }
 
-  applyFilters(): void {
-    this.currentPage = 1;
-    this.updateFilterChips();
-    this.loadPosts();
-  }
-
-  onFilterChipRemove(key: string): void {
-    if (key === 'category') this.filterCategory = null;
-    if (key === 'status') this.filterStatus = null;
-    this.updateFilterChips();
-    this.loadPosts();
-  }
-
-  onFiltersClear(): void {
-    this.filterCategory = null;
-    this.filterStatus = null;
-    this.updateFilterChips();
-    this.loadPosts();
-  }
-
-  setCurrentRow(row: any): void {
-    this.currentRow = row;
+  onBulkAction(event: { action: string; selected: any[] }): void {
+    if (event.action === 'delete') {
+      this.confirmationService.confirm({
+        message: `Delete ${event.selected.length} selected post(s)?`,
+        header: 'Confirm Bulk Delete',
+        icon: 'pi pi-exclamation-triangle',
+        acceptButtonStyleClass: 'p-button-danger',
+        accept: () => {
+          let completed = 0;
+          const total = event.selected.length;
+          for (const post of event.selected) {
+            this.blogService.deletePost(post.id).subscribe({
+              next: () => { completed++; if (completed === total) { this.messageService.add({ severity: 'success', summary: `${total} post(s) deleted` }); this.loadPosts(); } },
+              error: () => { completed++; if (completed === total) this.loadPosts(); },
+            });
+          }
+        },
+      });
+    }
   }
 
   confirmDelete(post: BlogPost): void {
     this.confirmationService.confirm({
-      message: `Are you sure you want to delete "${post.translations?.hr?.title || post.slug}"?`,
+      message: `Delete "${post.translations?.hr?.title || post.slug}"?`,
       header: 'Confirm Delete',
       icon: 'pi pi-exclamation-triangle',
       acceptButtonStyleClass: 'p-button-danger',
       accept: () => {
         this.blogService.deletePost(post.id).subscribe({
-          next: () => {
-            this.messageService.add({ severity: 'success', summary: 'Deleted', detail: 'Post deleted successfully' });
-            this.loadPosts();
-          },
-          error: () => {
-            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete post' });
-          },
+          next: () => { this.messageService.add({ severity: 'success', summary: 'Post deleted' }); this.loadPosts(); },
+          error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete post' }),
         });
       },
     });
@@ -275,13 +242,8 @@ export class BlogPostListComponent implements OnInit {
 
   private updateFilterChips(): void {
     const chips: FilterChip[] = [];
-    if (this.filterCategory) {
-      const cat = this.categoryOptions().find(c => c.value === this.filterCategory);
-      chips.push({ key: 'category', label: `Category: ${cat?.label || this.filterCategory}` });
-    }
-    if (this.filterStatus) {
-      chips.push({ key: 'status', label: `Status: ${this.filterStatus}` });
-    }
+    if (this.filterCategory) { const cat = this.categoryOptions().find(c => c.value === this.filterCategory); chips.push({ key: 'category', label: `Category: ${cat?.label || this.filterCategory}` }); }
+    if (this.filterStatus) chips.push({ key: 'status', label: `Status: ${this.filterStatus}` });
     this.filterChips.set(chips);
   }
 }
