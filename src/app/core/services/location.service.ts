@@ -24,6 +24,16 @@ export interface SyncReport {
   syncedAt: string;
 }
 
+export interface SyncLogEntry {
+  id: string;
+  success: boolean;
+  report: any;
+  error: string | null;
+  durationMs: number;
+  triggeredBy: string | null;
+  createdAt: string;
+}
+
 export interface City {
   id: string;
   cdnCityId: number;
@@ -84,6 +94,10 @@ export class LocationService {
     return this.http.post<SyncReport>(`${this.apiUrl}/locations/sync`, {}).pipe(
       finalize(() => this._isLoading.set(false))
     );
+  }
+
+  getSyncLogs(): Observable<SyncLogEntry[]> {
+    return this.http.get<SyncLogEntry[]>(`${this.apiUrl}/locations/sync-logs`);
   }
 
   getCities(): Observable<City[]> {
