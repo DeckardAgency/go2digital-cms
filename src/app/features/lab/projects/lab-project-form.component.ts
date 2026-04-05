@@ -150,7 +150,9 @@ import { environment } from '../../../../environments/environment';
           </div>
 
           @if (isEditMode()) {
-            <app-seo-editor entityType="lab-projects" [entityId]="projectId()!" [contentContext]="getSeoContentContext()" />
+            <div class="mt-6">
+              <app-seo-editor entityType="lab-projects" [entityId]="projectId()!" [contentContext]="getSeoContentContext()" />
+            </div>
           }
         </div>
 
