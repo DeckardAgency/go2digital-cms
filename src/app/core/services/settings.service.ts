@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, finalize } from 'rxjs';
+import { Observable, finalize, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export interface Setting {
@@ -34,7 +34,8 @@ export class SettingsService {
 
   getSettings(): Observable<Setting[]> {
     this._isLoading.set(true);
-    return this.http.get<Setting[]>(`${this.apiUrl}/settings`).pipe(
+    return this.http.get<any>(`${this.apiUrl}/settings`).pipe(
+      map(res => Array.isArray(res) ? res : (res['hydra:member'] || res['member'] || [])),
       finalize(() => this._isLoading.set(false))
     );
   }
