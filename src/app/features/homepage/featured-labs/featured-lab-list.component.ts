@@ -42,12 +42,6 @@ import { HomepageService } from '../../../core/services/homepage.service';
       (rowClick)="onRowClick($event)"
       (refresh)="loadItems()">
 
-      <ng-template dtHeaderActions>
-        <p-button
-          label="New Featured Lab Item"
-          icon="pi pi-plus"
-          (onClick)="router.navigate(['/homepage/featured-labs/new'])" />
-      </ng-template>
 
       <ng-template dtCell="title" let-row>
         <span class="font-medium text-surface-900 dark:text-surface-100">
