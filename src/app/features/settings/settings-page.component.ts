@@ -189,6 +189,20 @@ import { AuthService } from '../../core/services/auth.service';
       <!-- ═══ TRANSLATIONS ═══ -->
       @if (activeSection === 'translations') {
         <div class="space-y-6">
+          <!-- Language selector -->
+          <div class="flex items-center gap-1 bg-surface-100 dark:bg-surface-800 rounded-lg p-1 w-fit">
+            @for (loc of translationLocales; track loc.code) {
+              <button type="button"
+                class="px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                [class]="activeTranslationLocale === loc.code
+                  ? 'bg-surface-0 dark:bg-surface-700 text-surface-900 dark:text-surface-0 shadow-sm'
+                  : 'text-surface-500 hover:text-surface-700 dark:hover:text-surface-300'"
+                (click)="activeTranslationLocale = loc.code">
+                {{ loc.label }}
+              </button>
+            }
+          </div>
+
           @for (section of translationSections; track section.group) {
             <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700">
               <div class="p-5 border-b border-surface-200 dark:border-surface-700">
@@ -196,17 +210,12 @@ import { AuthService } from '../../core/services/auth.service';
               </div>
               <div class="divide-y divide-surface-200 dark:divide-surface-700">
                 @for (item of getTranslationSettings(section.group); track item.key) {
-                  <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 p-5 items-start">
-                    <div class="lg:col-span-1">
+                  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 p-5 items-center">
+                    <div>
                       <label class="text-sm font-medium text-surface-700 dark:text-surface-300 font-mono break-all">{{ item.key }}</label>
                     </div>
-                    <div class="lg:col-span-2 flex flex-col gap-1">
-                      <span class="text-xs text-surface-400 font-medium">HR</span>
-                      <input pInputText class="w-full" [ngModel]="getTranslationValue(item.key, 'hr')" (ngModelChange)="setTranslationValue(item.key, 'hr', $event, section.group)" />
-                    </div>
-                    <div class="lg:col-span-2 flex flex-col gap-1">
-                      <span class="text-xs text-surface-400 font-medium">EN</span>
-                      <input pInputText class="w-full" [ngModel]="getTranslationValue(item.key, 'en')" (ngModelChange)="setTranslationValue(item.key, 'en', $event, section.group)" />
+                    <div class="lg:col-span-2">
+                      <input pInputText class="w-full" [ngModel]="getTranslationValue(item.key, activeTranslationLocale)" (ngModelChange)="setTranslationValue(item.key, activeTranslationLocale, $event, section.group)" />
                     </div>
                   </div>
                 }
@@ -491,6 +500,23 @@ export class SettingsPageComponent implements OnInit, OnDestroy {
     { group: 'homepage', label: 'Homepage' },
     { group: 'footer', label: 'Footer' },
   ];
+
+  activeTranslationLocale = 'hr';
+
+  get translationLocales(): { code: string; label: string }[] {
+    // Detect locales from actual setting values
+    const localeSet = new Set<string>();
+    for (const s of this.allSettings()) {
+      if (this.isTranslationSetting(s)) {
+        for (const key of Object.keys(s.value)) {
+          if (key.length === 2) localeSet.add(key);
+        }
+      }
+    }
+    if (localeSet.size === 0) return [{ code: 'hr', label: 'HR' }, { code: 'en', label: 'EN' }];
+    const labelMap: Record<string, string> = { hr: 'Hrvatski', en: 'English', de: 'Deutsch', it: 'Italiano', fr: 'Fran\u00e7ais', es: 'Espa\u00f1ol' };
+    return [...localeSet].sort().map(c => ({ code: c, label: labelMap[c] || c.toUpperCase() }));
+  }
 
   ngOnInit(): void {
     this.loadSettings();
