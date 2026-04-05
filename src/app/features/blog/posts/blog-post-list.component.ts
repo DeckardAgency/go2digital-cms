@@ -8,6 +8,7 @@ import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { MenuModule } from 'primeng/menu';
+import { TableModule } from 'primeng/table';
 
 import {
   DataTableWrapperComponent,
@@ -29,12 +30,13 @@ import { BlogPost, BlogCategory } from '../../../core/models/blog.model';
   standalone: true,
   imports: [
     CommonModule, FormsModule, TagModule, ConfirmDialogModule, SelectModule,
-    ButtonModule, DataTableWrapperComponent, DataTableCellDirective,
+    ButtonModule, TableModule, DataTableWrapperComponent, DataTableCellDirective,
     DataTableHeaderActionsDirective, DataTableRowActionsDirective,
     DataTableFilterMenuDirective, MenuModule,
   ],
   providers: [ConfirmationService],
   template: `
+    @if (!reorderMode()) {
     <app-data-table-wrapper
       title="Blog Posts"
       entityName="posts"
@@ -53,6 +55,7 @@ import { BlogPost, BlogCategory } from '../../../core/models/blog.model';
       (refresh)="loadPosts()">
 
       <ng-template dtHeaderActions>
+        <p-button icon="pi pi-sort-alt" label="Reorder" severity="secondary" [outlined]="true" (onClick)="enterReorderMode()" />
         <p-button label="New Post" icon="pi pi-plus" (onClick)="router.navigate(['/blog/posts/new'])" />
       </ng-template>
 
@@ -109,6 +112,46 @@ import { BlogPost, BlogCategory } from '../../../core/models/blog.model';
       </ng-template>
     </app-data-table-wrapper>
 
+    }
+
+    @if (reorderMode()) {
+      <div class="space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">Reorder Posts</h1>
+            <p class="text-surface-500 dark:text-surface-400 mt-1">Drag rows to change order, then save</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <p-button label="Cancel" severity="secondary" [outlined]="true" (onClick)="exitReorderMode()" />
+            <p-button label="Save Order" icon="pi pi-save" [loading]="savingOrder()" (onClick)="saveOrder()" />
+          </div>
+        </div>
+
+        <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700">
+          <p-table [value]="reorderList()" styleClass="p-datatable-sm" (onRowReorder)="onRowReorder()">
+            <ng-template pTemplate="header">
+              <tr>
+                <th style="width: 3rem"></th>
+                <th style="width: 3rem">#</th>
+                <th>Title</th>
+                <th style="width: 120px">Date</th>
+                <th style="width: 110px">Status</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-row let-index="rowIndex">
+              <tr [pReorderableRow]="index">
+                <td><span class="pi pi-bars cursor-grab text-surface-400" pReorderableRowHandle></span></td>
+                <td><span class="text-xs font-bold text-surface-400">{{ index + 1 }}</span></td>
+                <td><span class="font-medium text-surface-900 dark:text-surface-0">{{ row.translations?.hr?.title || row.slug }}</span></td>
+                <td>{{ row.date | date:'dd.MM.yyyy' }}</td>
+                <td><p-tag [value]="row.status" [severity]="row.status === 'published' ? 'success' : 'secondary'" /></td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
+      </div>
+    }
+
     <p-confirmDialog />
   `,
 })
@@ -129,6 +172,11 @@ export class BlogPostListComponent implements OnInit {
   searchTerm = '';
   private currentPage = 1;
   private pageSize = 20;
+
+  // Reorder
+  reorderMode = signal(false);
+  reorderList = signal<BlogPost[]>([]);
+  savingOrder = signal(false);
 
   columns: DataTableColumn[] = [
     { key: 'title', label: 'Title', defaultVisible: true },
@@ -227,6 +275,43 @@ export class BlogPostListComponent implements OnInit {
       return found?.translations?.hr?.name || found?.slug || id;
     }
     return cat.translations?.hr?.name || cat.name || cat.slug || '—';
+  }
+
+  // ─── Reorder ───────────────────────────────────────────
+
+  enterReorderMode(): void {
+    this.reorderList.set([...this.posts()]);
+    this.reorderMode.set(true);
+  }
+
+  exitReorderMode(): void {
+    this.reorderMode.set(false);
+  }
+
+  onRowReorder(): void {}
+
+  saveOrder(): void {
+    const updates = this.reorderList().map((p, i) => ({ id: p.id, sortOrder: i + 1 }));
+    this.savingOrder.set(true);
+    let completed = 0;
+
+    for (const update of updates) {
+      this.blogService.updatePost(update.id, { sortOrder: update.sortOrder }).subscribe({
+        next: () => {
+          completed++;
+          if (completed === updates.length) {
+            this.savingOrder.set(false);
+            this.messageService.add({ severity: 'success', summary: 'Order saved', detail: `${updates.length} posts reordered` });
+            this.reorderMode.set(false);
+            this.loadPosts();
+          }
+        },
+        error: () => {
+          completed++;
+          if (completed === updates.length) { this.savingOrder.set(false); this.loadPosts(); }
+        },
+      });
+    }
   }
 
   onBulkAction(event: { action: string; selected: any[] }): void {

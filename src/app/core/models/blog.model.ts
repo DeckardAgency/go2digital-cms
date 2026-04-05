@@ -4,6 +4,7 @@ export interface BlogPost {
   date: string;
   author: string;
   featured: boolean;
+  sortOrder: number;
   status: string;
   category: BlogCategory | null;
   image: any;
