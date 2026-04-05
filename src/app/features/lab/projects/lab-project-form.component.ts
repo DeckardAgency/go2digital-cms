@@ -11,6 +11,7 @@ import { MessageService } from 'primeng/api';
 
 import { TranslationEditorComponent } from '../../../shared/components/translation-editor/translation-editor.component';
 import { ImageUploadComponent } from '../../../shared/components/image-upload/image-upload.component';
+import { FocalPointPickerComponent } from '../../../shared/components/focal-point-picker/focal-point-picker.component';
 import { LabService } from '../../../core/services/lab.service';
 import { LabCategory } from '../../../core/models/lab.model';
 import { environment } from '../../../../environments/environment';
@@ -20,7 +21,7 @@ import { environment } from '../../../../environments/environment';
   standalone: true,
   imports: [
     CommonModule, FormsModule, InputTextModule, SelectModule,
-    CheckboxModule, ButtonModule, TranslationEditorComponent, ImageUploadComponent,
+    CheckboxModule, ButtonModule, TranslationEditorComponent, ImageUploadComponent, FocalPointPickerComponent,
   ],
   template: `
     <div class="space-y-6">
@@ -135,6 +136,15 @@ import { environment } from '../../../../environments/environment';
                 [uploading]="isUploadingImage()"
                 (onUpload)="uploadImage($event)"
                 (onRemove)="removeImage()" />
+              @if (imageUrl()) {
+                <div class="mt-3">
+                  <app-focal-point-picker
+                    [imageUrl]="imageUrl()"
+                    [focalX]="focalX"
+                    [focalY]="focalY"
+                    (focalPointChange)="onFocalPointChange($event)" />
+                </div>
+              }
             } @else {
               <p class="text-sm text-surface-500 dark:text-surface-400">
                 Save the project first, then you can upload an image.
@@ -193,6 +203,8 @@ export class LabProjectFormComponent implements OnInit {
   allCategories = signal<LabCategory[]>([]);
   imageUrl = signal('');
   isUploadingImage = signal(false);
+  focalX = 50;
+  focalY = 50;
   createdAt = signal('');
   updatedAt = signal('');
 
@@ -302,9 +314,28 @@ export class LabProjectFormComponent implements OnInit {
     });
   }
 
+  onFocalPointChange(point: { x: number; y: number }): void {
+    this.focalX = point.x;
+    this.focalY = point.y;
+
+    const id = this.projectId();
+    if (!id) return;
+
+    this.http.put(`${environment.apiUrl}/lab-projects/${id}/focal-point`, point).subscribe({
+      next: () => {
+        this.messageService.add({ severity: 'success', summary: 'Focal point saved' });
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to save focal point' });
+      }
+    });
+  }
+
   private resolveImageUrl(image: any): void {
     if (typeof image === 'object' && image.path) {
       this.imageUrl.set(this.getFullImageUrl('/storage/media/' + image.path));
+      this.focalX = image.focalX ?? 50;
+      this.focalY = image.focalY ?? 50;
     } else if (typeof image === 'string' && image.startsWith('/api/media/')) {
       const mediaId = image.replace('/api/media/', '');
       this.http.get<any>(`${environment.apiUrl}/media/${mediaId}`).subscribe({
@@ -312,6 +343,8 @@ export class LabProjectFormComponent implements OnInit {
           if (media.path) {
             this.imageUrl.set(this.getFullImageUrl('/storage/media/' + media.path));
           }
+          this.focalX = media.focalX ?? 50;
+          this.focalY = media.focalY ?? 50;
         }
       });
     } else if (typeof image === 'string' && image) {

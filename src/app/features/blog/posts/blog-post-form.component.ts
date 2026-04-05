@@ -13,6 +13,7 @@ import { MessageService } from 'primeng/api';
 import { TranslationEditorComponent } from '../../../shared/components/translation-editor/translation-editor.component';
 import { ImageUploadComponent } from '../../../shared/components/image-upload/image-upload.component';
 import { BlogService } from '../../../core/services/blog.service';
+import { FocalPointPickerComponent } from '../../../shared/components/focal-point-picker/focal-point-picker.component';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -21,7 +22,7 @@ import { environment } from '../../../../environments/environment';
   imports: [
     CommonModule, FormsModule, InputTextModule, SelectModule,
     DatePickerModule, CheckboxModule, ButtonModule,
-    TranslationEditorComponent, ImageUploadComponent,
+    TranslationEditorComponent, ImageUploadComponent, FocalPointPickerComponent,
   ],
   template: `
     <div class="space-y-6">
@@ -143,6 +144,15 @@ import { environment } from '../../../../environments/environment';
                 [uploading]="isUploadingImage()"
                 (onUpload)="uploadImage($event)"
                 (onRemove)="removeImage()" />
+              @if (imageUrl()) {
+                <div class="mt-3">
+                  <app-focal-point-picker
+                    [imageUrl]="imageUrl()"
+                    [focalX]="focalX"
+                    [focalY]="focalY"
+                    (focalPointChange)="onFocalPointChange($event)" />
+                </div>
+              }
             } @else {
               <p class="text-sm text-surface-500 dark:text-surface-400">
                 Save the post first, then you can upload an image.
@@ -206,6 +216,8 @@ export class BlogPostFormComponent implements OnInit {
   categoryId: string | null = null;
   imageUrl = signal('');
   isUploadingImage = signal(false);
+  focalX = 50;
+  focalY = 50;
   createdAt = signal('');
   updatedAt = signal('');
   private pendingImageFile: File | null = null;
@@ -322,9 +334,28 @@ export class BlogPostFormComponent implements OnInit {
     });
   }
 
+  onFocalPointChange(point: { x: number; y: number }): void {
+    this.focalX = point.x;
+    this.focalY = point.y;
+
+    const id = this.postId();
+    if (!id) return;
+
+    this.http.put(`${environment.apiUrl}/blog-posts/${id}/focal-point`, point).subscribe({
+      next: () => {
+        this.messageService.add({ severity: 'success', summary: 'Focal point saved' });
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to save focal point' });
+      }
+    });
+  }
+
   private resolveImageUrl(image: any): void {
     if (typeof image === 'object' && image.path) {
       this.imageUrl.set(this.getFullImageUrl('/storage/media/' + image.path));
+      this.focalX = image.focalX ?? 50;
+      this.focalY = image.focalY ?? 50;
     } else if (typeof image === 'string' && image.startsWith('/api/media/')) {
       // IRI string — fetch the media object to get the real path
       const mediaId = image.replace('/api/media/', '');
@@ -333,6 +364,8 @@ export class BlogPostFormComponent implements OnInit {
           if (media.path) {
             this.imageUrl.set(this.getFullImageUrl('/storage/media/' + media.path));
           }
+          this.focalX = media.focalX ?? 50;
+          this.focalY = media.focalY ?? 50;
         }
       });
     } else if (typeof image === 'string' && image) {
