@@ -141,22 +141,59 @@ import { environment } from '../../../environments/environment';
           <!-- Live Preview Card -->
           <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
             <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Preview</h2>
-            <div class="rounded-lg bg-zinc-900 p-5 space-y-3">
-              <p class="text-[10px] text-green-400 uppercase tracking-widest flex items-center gap-1.5">
-                <span class="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
-                {{ translations().hr['kicker'] || 'Kicker' }}
-              </p>
-              <h3 class="text-white text-xl font-light leading-tight tracking-tight">
-                {{ translations().hr['titleLine1'] || 'Title Line 1' }}<br/>
-                {{ translations().hr['titleLine2'] || 'Title Line 2' }}
-              </h3>
-              <p class="text-zinc-300 text-xs leading-relaxed mt-3">{{ translations().hr['heading'] || 'Heading text' }}</p>
-              <p class="text-zinc-500 text-[10px] leading-relaxed">{{ translations().hr['description'] || 'Description text' }}</p>
-              <p class="text-zinc-600 text-[9px] uppercase tracking-wider mt-4 pt-3 border-t border-zinc-800">
-                {{ translations().hr['scrollDownLabel'] || 'Scroll Down' }} ↓
-              </p>
+            <!-- Mini hero mockup matching go2digital.hr layout -->
+            <div class="rounded-lg bg-white overflow-hidden border border-surface-200 dark:border-surface-700" style="aspect-ratio: 16/10;">
+              <div class="h-full flex flex-col">
+                <!-- Top: Logo + Video area -->
+                <div class="flex-1 flex">
+                  <!-- Left: Logo -->
+                  <div class="w-1/3 p-3 flex flex-col">
+                    <div class="text-[9px] font-bold tracking-wider text-zinc-900">
+                      GO <span class="inline-flex items-center justify-center w-3 h-3 rounded-full border border-green-500 text-[6px] text-green-500">2</span> DIGITAL
+                    </div>
+                  </div>
+                  <!-- Right: Video placeholder -->
+                  <div class="w-2/3 p-2 pt-3 pr-3">
+                    <div class="w-full h-full rounded-lg bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center overflow-hidden">
+                      @if (desktopVideoUrl()) {
+                        <video class="w-full h-full object-cover" [src]="desktopVideoUrl()" muted autoplay loop playsinline></video>
+                      } @else {
+                        <i class="pi pi-video text-zinc-400 text-lg"></i>
+                      }
+                    </div>
+                  </div>
+                </div>
+                <!-- Bottom: Content area (3 columns like real hero) -->
+                <div class="flex items-end px-3 pb-3 gap-2" style="height: 45%;">
+                  <!-- Left: Title -->
+                  <div class="w-2/5">
+                    <p class="text-zinc-900 font-light leading-none" style="font-size: 13px; letter-spacing: -0.02em;">
+                      {{ translations().hr['titleLine1'] || 'Title' }}<br/>{{ translations().hr['titleLine2'] || 'Line 2' }}
+                    </p>
+                  </div>
+                  <!-- Middle: Kicker + Heading + Description -->
+                  <div class="w-2/5 space-y-1">
+                    <p class="flex items-center gap-1 text-zinc-600" style="font-size: 7px;">
+                      <span class="w-1 h-1 bg-zinc-400 rounded-full"></span>
+                      {{ translations().hr['kicker'] || 'Kicker' }}
+                    </p>
+                    <p class="text-zinc-900 leading-tight" style="font-size: 8px; font-weight: 500;">
+                      {{ translations().hr['heading'] || 'Heading' }}
+                    </p>
+                    <p class="text-zinc-500 leading-tight" style="font-size: 6px;">
+                      {{ translations().hr['description'] || 'Description' }}
+                    </p>
+                  </div>
+                  <!-- Right: Scroll label -->
+                  <div class="w-1/5 text-right">
+                    <p class="text-zinc-400" style="font-size: 6px;">
+                      {{ translations().hr['scrollDownLabel'] || 'Scroll' }}
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
-            <p class="text-[10px] text-surface-400 mt-3 text-center">Live preview — Croatian content</p>
+            <p class="text-[10px] text-surface-400 mt-3 text-center">Approximate layout — Croatian content</p>
           </div>
 
           <!-- Section Info -->
