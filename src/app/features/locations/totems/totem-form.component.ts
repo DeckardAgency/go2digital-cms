@@ -5,7 +5,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
-import { CheckboxModule } from 'primeng/checkbox';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { ButtonModule } from 'primeng/button';
 import { MessageService } from 'primeng/api';
@@ -17,7 +17,7 @@ import { LocationService, TotemDetail } from '../../../core/services/location.se
   standalone: true,
   imports: [
     CommonModule, FormsModule, InputTextModule, TextareaModule,
-    CheckboxModule, InputNumberModule, ButtonModule,
+    ToggleSwitchModule, InputNumberModule, ButtonModule,
   ],
   template: `
     <div class="space-y-6">
@@ -118,39 +118,37 @@ import { LocationService, TotemDetail } from '../../../core/services/location.se
           <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
             <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-5">Settings</h2>
             <div class="flex flex-col gap-4">
-              <div class="flex items-center gap-2 pt-1">
-                <p-checkbox [(ngModel)]="isPublished" [binary]="true" inputId="isPublished" />
+              <div class="flex items-center justify-between">
                 <label for="isPublished" class="text-sm font-medium text-surface-700 dark:text-surface-300">Published</label>
+                <p-toggleswitch [(ngModel)]="isPublished" inputId="isPublished" />
               </div>
-              <div class="flex items-center gap-2">
-                <p-checkbox [(ngModel)]="isInstalled" [binary]="true" inputId="isInstalled" />
+              <div class="flex items-center justify-between">
                 <label for="isInstalled" class="text-sm font-medium text-surface-700 dark:text-surface-300">Installed</label>
+                <p-toggleswitch [(ngModel)]="isInstalled" inputId="isInstalled" />
               </div>
-              <div class="flex items-center gap-2">
-                <p-checkbox [(ngModel)]="isBigScreen" [binary]="true" inputId="isBigScreen" />
+              <div class="flex items-center justify-between">
                 <label for="isBigScreen" class="text-sm font-medium text-surface-700 dark:text-surface-300">Big Screen</label>
+                <p-toggleswitch [(ngModel)]="isBigScreen" inputId="isBigScreen" />
               </div>
               <div class="flex flex-col gap-2">
                 <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Reach</label>
-                <p-inputNumber [(ngModel)]="reach" [useGrouping]="true" class="w-full" />
+                <p-inputNumber [(ngModel)]="reach" [useGrouping]="true" styleClass="w-full" inputStyleClass="w-full" />
               </div>
               <div class="flex flex-col gap-2">
                 <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Ad Duration (sec)</label>
-                <p-inputNumber [(ngModel)]="adDuration" class="w-full" />
+                <p-inputNumber [(ngModel)]="adDuration" styleClass="w-full" inputStyleClass="w-full" />
               </div>
-              <div class="grid grid-cols-2 gap-3">
-                <div class="flex flex-col gap-2">
-                  <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Screen Width</label>
-                  <p-inputNumber [(ngModel)]="screenWidth" class="w-full" />
-                </div>
-                <div class="flex flex-col gap-2">
-                  <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Screen Height</label>
-                  <p-inputNumber [(ngModel)]="screenHeight" class="w-full" />
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Screen Size</label>
+                <div class="flex items-center gap-2">
+                  <p-inputNumber [(ngModel)]="screenWidth" placeholder="Width" styleClass="flex-1" inputStyleClass="w-full" />
+                  <span class="text-surface-400 text-sm">×</span>
+                  <p-inputNumber [(ngModel)]="screenHeight" placeholder="Height" styleClass="flex-1" inputStyleClass="w-full" />
                 </div>
               </div>
               <div class="flex flex-col gap-2">
                 <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Sort Order</label>
-                <p-inputNumber [(ngModel)]="sortOrder" class="w-full" />
+                <p-inputNumber [(ngModel)]="sortOrder" styleClass="w-full" inputStyleClass="w-full" />
               </div>
             </div>
           </div>
