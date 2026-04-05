@@ -163,13 +163,15 @@ import { environment } from '../../../../environments/environment';
           <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
             <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-5">Settings</h2>
             <div class="flex flex-col gap-4">
-              <div class="flex flex-col gap-2">
-                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Status</label>
-                <p-select [options]="statusOptions" [(ngModel)]="status" optionLabel="label" optionValue="value" class="w-full" />
-              </div>
-              <div class="flex items-center gap-2 pt-1">
-                <p-checkbox [(ngModel)]="featured" [binary]="true" inputId="featured" />
-                <label for="featured" class="text-sm font-medium text-surface-700 dark:text-surface-300">Featured project</label>
+              <div class="flex items-center gap-3">
+                <div class="flex flex-col gap-2 flex-1">
+                  <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Status</label>
+                  <p-select [options]="statusOptions" [(ngModel)]="status" optionLabel="label" optionValue="value" class="w-full" />
+                </div>
+                <div class="flex items-center gap-2 pt-6">
+                  <p-checkbox [(ngModel)]="featured" [binary]="true" inputId="featured" />
+                  <label for="featured" class="text-sm font-medium text-surface-700 dark:text-surface-300 whitespace-nowrap">Featured</label>
+                </div>
               </div>
               <div class="flex flex-col gap-2">
                 <div class="flex items-center justify-between">
