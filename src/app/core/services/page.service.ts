@@ -34,7 +34,7 @@ export class PageService {
     this._isLoading.set(true);
     const headers = new HttpHeaders({ 'Content-Type': 'application/ld+json' });
 
-    return this.http.post<any>(`${this.apiUrl}/pages`, data, { headers }).pipe(
+    return this.http.post<any>(`${this.apiUrl}/pages-manage`, data, { headers }).pipe(
       finalize(() => this._isLoading.set(false))
     );
   }
@@ -43,7 +43,7 @@ export class PageService {
     this._isLoading.set(true);
     const headers = new HttpHeaders({ 'Content-Type': 'application/merge-patch+json' });
 
-    return this.http.patch<any>(`${this.apiUrl}/pages/${id}`, data, { headers }).pipe(
+    return this.http.put<any>(`${this.apiUrl}/pages-manage/${id}`, data).pipe(
       finalize(() => this._isLoading.set(false))
     );
   }
