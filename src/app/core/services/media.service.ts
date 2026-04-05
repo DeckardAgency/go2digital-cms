@@ -11,10 +11,14 @@ export interface MediaItem {
   size: number;
   width?: number;
   height?: number;
+  duration?: number;
   collection: string;
   path: string;
   thumbnails?: any;
   url?: string;
+  createdAt?: string;
+  focalX?: number;
+  focalY?: number;
 }
 
 @Injectable({ providedIn: 'root' })
