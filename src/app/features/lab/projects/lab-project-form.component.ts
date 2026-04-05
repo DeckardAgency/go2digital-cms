@@ -7,6 +7,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { CheckboxModule } from 'primeng/checkbox';
 import { ButtonModule } from 'primeng/button';
+import { TextareaModule } from 'primeng/textarea';
 import { MessageService } from 'primeng/api';
 
 import { TranslationEditorComponent } from '../../../shared/components/translation-editor/translation-editor.component';
@@ -22,7 +23,8 @@ import { environment } from '../../../../environments/environment';
   standalone: true,
   imports: [
     CommonModule, FormsModule, InputTextModule, SelectModule,
-    CheckboxModule, ButtonModule, TranslationEditorComponent, ImageUploadComponent, FocalPointPickerComponent,
+    CheckboxModule, ButtonModule, TextareaModule,
+    TranslationEditorComponent, ImageUploadComponent, FocalPointPickerComponent,
     SeoEditorComponent,
   ],
   template: `
@@ -73,6 +75,58 @@ import { environment } from '../../../../environments/environment';
               [translations]="translations()"
               [fields]="translationFields"
               (translationsChange)="translations.set($event)" />
+          </div>
+
+          <!-- Sections -->
+          <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+            <div class="flex items-center justify-between mb-5">
+              <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0">Sections</h2>
+              <div class="flex items-center gap-2">
+                <!-- Language selector -->
+                <div class="flex items-center gap-0.5 bg-surface-100 dark:bg-surface-800 rounded-lg p-0.5">
+                  @for (loc of sectionLocales; track loc.code) {
+                    <button type="button"
+                      class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                      [class]="activeSectionLocale === loc.code
+                        ? 'bg-surface-0 dark:bg-surface-700 text-surface-900 dark:text-surface-0 shadow-sm'
+                        : 'text-surface-500 hover:text-surface-700 dark:hover:text-surface-300'"
+                      (click)="activeSectionLocale = loc.code">
+                      {{ loc.code.toUpperCase() }}
+                    </button>
+                  }
+                </div>
+                <p-button label="Add Section" icon="pi pi-plus" size="small" [outlined]="true" (onClick)="addSection()" />
+              </div>
+            </div>
+
+            @if (getSections().length === 0) {
+              <div class="text-center py-8 text-surface-400">
+                <i class="pi pi-list text-3xl mb-2 block"></i>
+                <p class="text-sm">No sections yet</p>
+                <p class="text-xs mt-1">Add sections to structure your project content</p>
+              </div>
+            } @else {
+              <div class="flex flex-col gap-4">
+                @for (section of getSections(); track $index; let i = $index; let first = $first; let last = $last) {
+                  <div class="border border-surface-200 dark:border-surface-700 rounded-lg overflow-hidden">
+                    <!-- Section header -->
+                    <div class="flex items-center gap-2 px-4 py-2.5 bg-surface-50 dark:bg-surface-800">
+                      <span class="text-xs font-bold text-surface-400 w-6">{{ i + 1 }}</span>
+                      <input pInputText class="flex-1 text-sm" [(ngModel)]="section.label" placeholder="Section label (e.g. Why this case?)" />
+                      <div class="flex items-center gap-1">
+                        <p-button icon="pi pi-arrow-up" [text]="true" [rounded]="true" size="small" severity="secondary" [disabled]="first" (onClick)="moveSection(i, -1)" />
+                        <p-button icon="pi pi-arrow-down" [text]="true" [rounded]="true" size="small" severity="secondary" [disabled]="last" (onClick)="moveSection(i, 1)" />
+                        <p-button icon="pi pi-trash" [text]="true" [rounded]="true" size="small" severity="danger" (onClick)="removeSection(i)" />
+                      </div>
+                    </div>
+                    <!-- Section content -->
+                    <div class="p-4">
+                      <textarea pTextarea class="w-full" [rows]="4" [(ngModel)]="section.content" placeholder="Section content..."></textarea>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
           </div>
 
           @if (isEditMode()) {
@@ -198,9 +252,15 @@ export class LabProjectFormComponent implements OnInit {
   projectId = signal<string | null>(null);
 
   translations = signal<{ hr: Record<string, any>; en: Record<string, any> }>({
-    hr: { title: '', shortTitle: '', subtitle: '', body: '' },
-    en: { title: '', shortTitle: '', subtitle: '', body: '' },
+    hr: { title: '', shortTitle: '', subtitle: '', body: '', sections: [] },
+    en: { title: '', shortTitle: '', subtitle: '', body: '', sections: [] },
   });
+
+  activeSectionLocale = 'hr';
+  sectionLocales = [
+    { code: 'hr', label: 'Hrvatski' },
+    { code: 'en', label: 'English' },
+  ];
 
   slug = '';
   status = 'draft';
@@ -259,12 +319,14 @@ export class LabProjectFormComponent implements OnInit {
               shortTitle: project.translations.hr?.shortTitle || '',
               subtitle: project.translations.hr?.subtitle || '',
               body: project.translations.hr?.body || '',
+              sections: (project.translations.hr as any)?.sections || [],
             },
             en: {
               title: project.translations.en?.title || '',
               shortTitle: project.translations.en?.shortTitle || '',
               subtitle: project.translations.en?.subtitle || '',
               body: project.translations.en?.body || '',
+              sections: (project.translations.en as any)?.sections || [],
             },
           });
         }
@@ -362,6 +424,44 @@ export class LabProjectFormComponent implements OnInit {
     if (!path) return '';
     if (path.startsWith('http')) return path;
     return environment.apiUrl.replace('/api', '') + path;
+  }
+
+  // ─── Sections ──────────────────────────────────────────
+
+  getSections(): { label: string; content: string }[] {
+    const t = this.translations();
+    const locale = this.activeSectionLocale as 'hr' | 'en';
+    if (!t[locale]['sections']) t[locale]['sections'] = [];
+    return t[locale]['sections'];
+  }
+
+  addSection(): void {
+    const t = this.translations();
+    for (const locale of ['hr', 'en']) {
+      if (!t[locale as 'hr' | 'en']['sections']) t[locale as 'hr' | 'en']['sections'] = [];
+      t[locale as 'hr' | 'en']['sections'].push({ label: '', content: '' });
+    }
+    this.translations.set({ ...t });
+  }
+
+  removeSection(index: number): void {
+    const t = this.translations();
+    for (const locale of ['hr', 'en']) {
+      t[locale as 'hr' | 'en']['sections']?.splice(index, 1);
+    }
+    this.translations.set({ ...t });
+  }
+
+  moveSection(index: number, direction: number): void {
+    const t = this.translations();
+    const newIndex = index + direction;
+    for (const locale of ['hr', 'en']) {
+      const arr = t[locale as 'hr' | 'en']['sections'];
+      if (arr && newIndex >= 0 && newIndex < arr.length) {
+        [arr[index], arr[newIndex]] = [arr[newIndex], arr[index]];
+      }
+    }
+    this.translations.set({ ...t });
   }
 
   getSeoContentContext(): SeoContentContext {
