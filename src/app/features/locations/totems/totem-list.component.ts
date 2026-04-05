@@ -35,11 +35,11 @@ import { LocationService, Totem, City } from '../../../core/services/location.se
     @if (!reorderMode()) {
       <app-data-table-wrapper
         title="Totems"
-        [subtitle]="'Manage totems (' + totems().length + ' total)'"
+        [subtitle]="'Manage totems (' + filteredTotems().length + ' total)'"
         entityName="totems"
         [columns]="columns"
-        [data]="totems()"
-        [totalRecords]="totems().length"
+        [data]="paginatedTotems()"
+        [totalRecords]="filteredTotems().length"
         [loading]="locationService.isLoading()"
         [filterChips]="filterChips()"
         (stateChange)="onStateChange($event)"
@@ -152,6 +152,9 @@ export class TotemListComponent implements OnInit {
 
   filterCity: string | null = null;
   currentRow: Totem | null = null;
+  searchTerm = '';
+  currentPage = 1;
+  pageSize = 20;
 
   // Reorder
   reorderMode = signal(false);
@@ -191,7 +194,31 @@ export class TotemListComponent implements OnInit {
     });
   }
 
-  onStateChange(state: DataTableState): void { this.loadTotems(); }
+  filteredTotems(): Totem[] {
+    let result = this.totems();
+    if (this.searchTerm.trim()) {
+      const q = this.searchTerm.toLowerCase();
+      result = result.filter(t =>
+        t.name?.toLowerCase().includes(q) ||
+        t.cityName?.toLowerCase().includes(q) ||
+        t.totemType?.toLowerCase().includes(q) ||
+        t.postbuyCategory?.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }
+
+  paginatedTotems(): Totem[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.filteredTotems().slice(start, start + this.pageSize);
+  }
+
+  onStateChange(state: DataTableState): void {
+    this.currentPage = state.page;
+    this.pageSize = state.pageSize;
+    if (state.search !== undefined) this.searchTerm = state.search;
+  }
+
   onRowClick(row: Totem): void { this.router.navigate(['/locations/totems', row.id]); }
 
   applyFilters(): void { this.updateFilterChips(); this.loadTotems(); }
