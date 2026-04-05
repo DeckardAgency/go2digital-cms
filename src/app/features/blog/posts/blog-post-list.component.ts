@@ -39,8 +39,8 @@ import { BlogPost, BlogCategory } from '../../../core/models/blog.model';
       title="Blog Posts"
       entityName="posts"
       [columns]="columns"
-      [data]="posts()"
-      [totalRecords]="totalRecords()"
+      [data]="paginatedPosts()"
+      [totalRecords]="filteredPosts().length"
       [loading]="blogService.isLoading()"
       [filterChips]="filterChips()"
       [showSelection]="true"
@@ -57,14 +57,14 @@ import { BlogPost, BlogCategory } from '../../../core/models/blog.model';
       </ng-template>
 
       <ng-template dtFilterMenu>
-        <div class="flex flex-wrap items-end gap-4">
+        <div class="flex flex-wrap items-end gap-4 p-4">
           <div class="flex flex-col gap-2">
             <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Category</label>
-            <p-select [options]="categoryOptions()" [(ngModel)]="filterCategory" optionLabel="label" optionValue="value" placeholder="All categories" [showClear]="true" class="w-48" (onChange)="applyFilters()" />
+            <p-select [options]="categoryOptions()" [(ngModel)]="filterCategory" optionLabel="label" optionValue="value" placeholder="All categories" [showClear]="true" class="w-48" appendTo="body" (onChange)="applyFilters()" />
           </div>
           <div class="flex flex-col gap-2">
             <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Status</label>
-            <p-select [options]="statusOptions" [(ngModel)]="filterStatus" optionLabel="label" optionValue="value" placeholder="All statuses" [showClear]="true" class="w-48" (onChange)="applyFilters()" />
+            <p-select [options]="statusOptions" [(ngModel)]="filterStatus" optionLabel="label" optionValue="value" placeholder="All statuses" [showClear]="true" class="w-48" appendTo="body" (onChange)="applyFilters()" />
           </div>
         </div>
       </ng-template>
@@ -126,6 +126,7 @@ export class BlogPostListComponent implements OnInit {
 
   filterCategory: string | null = null;
   filterStatus: string | null = null;
+  searchTerm = '';
   private currentPage = 1;
   private pageSize = 20;
 
@@ -179,7 +180,31 @@ export class BlogPostListComponent implements OnInit {
     });
   }
 
-  onStateChange(state: DataTableState): void { this.currentPage = state.page; this.pageSize = state.pageSize; this.loadPosts(); }
+  filteredPosts(): BlogPost[] {
+    let result = this.posts();
+    if (this.searchTerm.trim()) {
+      const q = this.searchTerm.toLowerCase();
+      result = result.filter(p =>
+        (p.translations?.hr?.title || '').toLowerCase().includes(q) ||
+        (p.translations?.en?.title || '').toLowerCase().includes(q) ||
+        (p.slug || '').toLowerCase().includes(q) ||
+        (p.author || '').toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }
+
+  paginatedPosts(): BlogPost[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.filteredPosts().slice(start, start + this.pageSize);
+  }
+
+  onStateChange(state: DataTableState): void {
+    this.currentPage = state.page;
+    this.pageSize = state.pageSize;
+    if (state.search !== undefined) this.searchTerm = state.search;
+  }
+
   onRowClick(row: BlogPost): void { this.router.navigate(['/blog/posts', row.id]); }
 
   applyFilters(): void { this.currentPage = 1; this.updateFilterChips(); this.loadPosts(); }
