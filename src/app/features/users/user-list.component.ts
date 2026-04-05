@@ -2,7 +2,6 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
-import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { DrawerModule } from 'primeng/drawer';
 import { InputTextModule } from 'primeng/inputtext';
@@ -11,8 +10,19 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { PasswordModule } from 'primeng/password';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TooltipModule } from 'primeng/tooltip';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { MenuModule } from 'primeng/menu';
+import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 
+import {
+  DataTableWrapperComponent,
+  DataTableCellDirective,
+  DataTableHeaderActionsDirective,
+  DataTableRowActionsDirective,
+  DataTableFilterMenuDirective,
+  DataTableColumn,
+  DataTableState,
+  FilterChip,
+} from '../../shared/components/data-table-wrapper';
 import { UserService, UserRecord, CreateUserPayload, UpdateUserPayload } from '../../core/services/user.service';
 import { AuthService } from '../../core/services/auth.service';
 
@@ -20,86 +30,100 @@ import { AuthService } from '../../core/services/auth.service';
   selector: 'app-user-list',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, ButtonModule, TableModule, TagModule,
+    CommonModule, FormsModule, ButtonModule, TagModule,
     DrawerModule, InputTextModule, SelectModule, ToggleSwitchModule,
-    PasswordModule, ConfirmDialogModule, TooltipModule,
+    PasswordModule, ConfirmDialogModule, TooltipModule, MenuModule,
+    DataTableWrapperComponent, DataTableCellDirective,
+    DataTableHeaderActionsDirective, DataTableRowActionsDirective,
+    DataTableFilterMenuDirective,
   ],
   providers: [ConfirmationService],
   template: `
-    <div>
-      <!-- Header -->
-      <div class="flex items-center justify-between mb-6">
-        <div>
-          <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">Users</h1>
-          <p class="text-surface-500 text-sm mt-0.5">Manage user accounts and permissions</p>
-        </div>
-        <p-button label="New User" icon="pi pi-plus" (onClick)="openCreate()" />
-      </div>
+    <app-data-table-wrapper
+      title="Users"
+      entityName="users"
+      [columns]="columns"
+      [data]="filteredUsers()"
+      [totalRecords]="filteredUsers().length"
+      [loading]="userService.isLoading()"
+      [filterChips]="filterChips()"
+      (stateChange)="onStateChange($event)"
+      (rowClick)="openEdit($event)"
+      (filterChipRemove)="onFilterChipRemove($event)"
+      (filtersClear)="onFiltersClear()"
+      (refresh)="loadUsers()">
 
-      <!-- Table -->
-      <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700">
-        <p-table
-          [value]="users()"
-          [loading]="userService.isLoading()"
-          styleClass="p-datatable-sm"
-          [paginator]="users().length > 20"
-          [rows]="20">
-          <ng-template #header>
-            <tr>
-              <th>User</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Status</th>
-              <th>Created</th>
-              <th class="w-32 text-right">Actions</th>
-            </tr>
-          </ng-template>
-          <ng-template #body let-user>
-            <tr>
-              <td>
-                <div class="flex items-center gap-3">
-                  <div class="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary">
-                    {{ user.firstName?.charAt(0) }}{{ user.lastName?.charAt(0) }}
-                  </div>
-                  <div>
-                    <div class="font-medium text-surface-900 dark:text-surface-0">{{ user.firstName }} {{ user.lastName }}</div>
-                  </div>
-                </div>
-              </td>
-              <td>
-                <span class="text-surface-600 dark:text-surface-400">{{ user.email }}</span>
-              </td>
-              <td>
-                <p-tag [value]="getHighestRole(user.roles)" [severity]="getRoleSeverity(user.roles)" />
-              </td>
-              <td>
-                <p-tag [value]="user.isActive ? 'Active' : 'Inactive'" [severity]="user.isActive ? 'success' : 'danger'" />
-              </td>
-              <td>
-                <span class="text-sm text-surface-500">{{ user.createdAt | date:'MMM d, y' }}</span>
-              </td>
-              <td class="text-right">
-                <div class="flex items-center justify-end gap-1">
-                  <p-button icon="pi pi-envelope" [text]="true" size="small" severity="secondary" pTooltip="Send reset email" (onClick)="sendReset(user)" />
-                  <p-button icon="pi pi-pencil" [text]="true" size="small" severity="secondary" (onClick)="openEdit(user)" />
-                  <p-button icon="pi pi-trash" [text]="true" size="small" severity="danger"
-                    [disabled]="user.id === authService.user()?.id"
-                    (onClick)="confirmDelete($event, user)" />
-                </div>
-              </td>
-            </tr>
-          </ng-template>
-          <ng-template #emptymessage>
-            <tr>
-              <td colspan="6" class="text-center py-8 text-surface-400">
-                <i class="pi pi-users text-3xl mb-2 block"></i>
-                No users found
-              </td>
-            </tr>
-          </ng-template>
-        </p-table>
-      </div>
-    </div>
+      <!-- Header Actions -->
+      <ng-template dtHeaderActions>
+        <p-button label="New User" icon="pi pi-plus" (onClick)="openCreate()" />
+      </ng-template>
+
+      <!-- Filter Menu -->
+      <ng-template dtFilterMenu>
+        <div class="flex flex-wrap items-end gap-4">
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Role</label>
+            <p-select
+              [options]="roleFilterOptions"
+              [(ngModel)]="filterRole"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="All roles"
+              [showClear]="true"
+              class="w-48"
+              (onChange)="applyFilters()" />
+          </div>
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Status</label>
+            <p-select
+              [options]="statusFilterOptions"
+              [(ngModel)]="filterStatus"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="All statuses"
+              [showClear]="true"
+              class="w-48"
+              (onChange)="applyFilters()" />
+          </div>
+        </div>
+      </ng-template>
+
+      <!-- Custom Cells -->
+      <ng-template dtCell="name" let-row>
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary flex-shrink-0">
+            {{ row.firstName?.charAt(0) }}{{ row.lastName?.charAt(0) }}
+          </div>
+          <div>
+            <div class="font-medium text-surface-900 dark:text-surface-0">{{ row.firstName }} {{ row.lastName }}</div>
+            <div class="text-xs text-surface-400">{{ row.email }}</div>
+          </div>
+        </div>
+      </ng-template>
+
+      <ng-template dtCell="role" let-row>
+        <p-tag [value]="getRoleLabel(row.roles)" [severity]="getRoleSeverity(row.roles)" />
+      </ng-template>
+
+      <ng-template dtCell="status" let-row>
+        <p-tag [value]="row.isActive ? 'Active' : 'Inactive'" [severity]="row.isActive ? 'success' : 'danger'" />
+      </ng-template>
+
+      <ng-template dtCell="createdAt" let-row>
+        {{ row.createdAt | date:'dd.MM.yyyy' }}
+      </ng-template>
+
+      <!-- Row Actions (three-dot menu) -->
+      <ng-template dtRowActions let-row>
+        <p-button
+          icon="pi pi-ellipsis-v"
+          [text]="true"
+          [rounded]="true"
+          severity="secondary"
+          (onClick)="setCurrentRow(row); rowMenu.toggle($event)" />
+        <p-menu #rowMenu [model]="rowMenuItems" [popup]="true" appendTo="body" />
+      </ng-template>
+    </app-data-table-wrapper>
 
     <!-- User Drawer -->
     <p-drawer [(visible)]="drawerVisible" [header]="isEditMode() ? 'Edit User' : 'New User'" position="right" [style]="{ width: '480px' }">
@@ -229,11 +253,36 @@ export class UserListComponent implements OnInit {
   private readonly messageService = inject(MessageService);
 
   users = signal<UserRecord[]>([]);
+  filterChips = signal<FilterChip[]>([]);
   drawerVisible = false;
   isEditMode = signal(false);
   editId = signal<string | null>(null);
   generatedPassword = signal<string | null>(null);
   sendingReset = signal(false);
+
+  filterRole: string | null = null;
+  filterStatus: string | null = null;
+
+  columns: DataTableColumn[] = [
+    { key: 'name', label: 'User', defaultVisible: true },
+    { key: 'role', label: 'Role', defaultVisible: true, width: '140px' },
+    { key: 'status', label: 'Status', defaultVisible: true, width: '110px' },
+    { key: 'createdAt', label: 'Created', defaultVisible: true, width: '120px' },
+  ];
+
+  currentRow: UserRecord | null = null;
+  rowMenuItems: MenuItem[] = [];
+
+  roleFilterOptions = [
+    { label: 'Super Admin', value: 'ROLE_SUPER_ADMIN' },
+    { label: 'Admin', value: 'ROLE_ADMIN' },
+    { label: 'Editor', value: 'ROLE_EDITOR' },
+  ];
+
+  statusFilterOptions = [
+    { label: 'Active', value: 'active' },
+    { label: 'Inactive', value: 'inactive' },
+  ];
 
   form = {
     email: '',
@@ -251,9 +300,7 @@ export class UserListComponent implements OnInit {
     { label: 'Super Admin', value: 'ROLE_SUPER_ADMIN' },
   ];
 
-  strengthLabels: Record<number, string> = {
-    1: 'Very weak', 2: 'Weak', 3: 'Fair', 4: 'Strong', 5: 'Very strong',
-  };
+  strengthLabels: Record<number, string> = { 1: 'Very weak', 2: 'Weak', 3: 'Fair', 4: 'Strong', 5: 'Very strong' };
   strengthColors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-green-500', 'bg-emerald-500'];
   strengthTextColors = ['text-red-500', 'text-orange-500', 'text-yellow-500', 'text-green-500', 'text-emerald-500'];
 
@@ -267,6 +314,62 @@ export class UserListComponent implements OnInit {
       error: () => this.messageService.add({ severity: 'error', summary: 'Failed to load users' }),
     });
   }
+
+  filteredUsers(): UserRecord[] {
+    let result = this.users();
+    if (this.filterRole) {
+      result = result.filter(u => u.roles.includes(this.filterRole!));
+    }
+    if (this.filterStatus) {
+      result = result.filter(u => this.filterStatus === 'active' ? u.isActive : !u.isActive);
+    }
+    return result;
+  }
+
+  onStateChange(state: DataTableState): void {
+    // Client-side filtering, no server pagination needed
+  }
+
+  applyFilters(): void {
+    this.updateFilterChips();
+  }
+
+  onFilterChipRemove(key: string): void {
+    if (key === 'role') this.filterRole = null;
+    if (key === 'status') this.filterStatus = null;
+    this.updateFilterChips();
+  }
+
+  onFiltersClear(): void {
+    this.filterRole = null;
+    this.filterStatus = null;
+    this.updateFilterChips();
+  }
+
+  private updateFilterChips(): void {
+    const chips: FilterChip[] = [];
+    if (this.filterRole) {
+      const opt = this.roleFilterOptions.find(o => o.value === this.filterRole);
+      chips.push({ key: 'role', label: `Role: ${opt?.label || this.filterRole}` });
+    }
+    if (this.filterStatus) {
+      chips.push({ key: 'status', label: `Status: ${this.filterStatus}` });
+    }
+    this.filterChips.set(chips);
+  }
+
+  setCurrentRow(row: UserRecord): void {
+    this.currentRow = row;
+    const isSelf = row.id === this.authService.user()?.id;
+    this.rowMenuItems = [
+      { label: 'Edit', icon: 'pi pi-pencil', command: () => this.openEdit(row) },
+      { label: 'Send Reset Email', icon: 'pi pi-envelope', command: () => this.sendReset(row) },
+      { separator: true },
+      { label: 'Delete', icon: 'pi pi-trash', styleClass: 'text-red-500', disabled: isSelf, command: () => this.confirmDelete(row) },
+    ];
+  }
+
+  // ─── Drawer ────────────────────────────────────────────
 
   openCreate(): void {
     this.isEditMode.set(false);
@@ -297,12 +400,10 @@ export class UserListComponent implements OnInit {
       this.messageService.add({ severity: 'warn', summary: 'Please fill in all required fields' });
       return;
     }
-
     if (!this.isEditMode() && !this.form.password) {
       this.messageService.add({ severity: 'warn', summary: 'Password is required for new users' });
       return;
     }
-
     if (this.form.password && this.form.password !== this.form.confirmPassword) {
       this.messageService.add({ severity: 'warn', summary: 'Passwords do not match' });
       return;
@@ -312,48 +413,30 @@ export class UserListComponent implements OnInit {
 
     if (this.isEditMode()) {
       const payload: UpdateUserPayload = {
-        email: this.form.email,
-        firstName: this.form.firstName,
-        lastName: this.form.lastName,
-        roles,
-        isActive: this.form.isActive,
+        email: this.form.email, firstName: this.form.firstName, lastName: this.form.lastName,
+        roles, isActive: this.form.isActive,
       };
       if (this.form.password) payload.password = this.form.password;
 
       this.userService.updateUser(this.editId()!, payload).subscribe({
-        next: () => {
-          this.messageService.add({ severity: 'success', summary: 'User updated' });
-          this.drawerVisible = false;
-          this.loadUsers();
-        },
-        error: (err) => {
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.error || 'Failed to update user' });
-        },
+        next: () => { this.messageService.add({ severity: 'success', summary: 'User updated' }); this.drawerVisible = false; this.loadUsers(); },
+        error: (err) => this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.error || 'Failed to update user' }),
       });
     } else {
       const payload: CreateUserPayload = {
-        email: this.form.email,
-        firstName: this.form.firstName,
-        lastName: this.form.lastName,
-        password: this.form.password,
-        roles,
-        isActive: this.form.isActive,
+        email: this.form.email, firstName: this.form.firstName, lastName: this.form.lastName,
+        password: this.form.password, roles, isActive: this.form.isActive,
       };
-
       this.userService.createUser(payload).subscribe({
-        next: () => {
-          this.messageService.add({ severity: 'success', summary: 'User created' });
-          this.drawerVisible = false;
-          this.loadUsers();
-        },
-        error: (err) => {
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.error || 'Failed to create user' });
-        },
+        next: () => { this.messageService.add({ severity: 'success', summary: 'User created' }); this.drawerVisible = false; this.loadUsers(); },
+        error: (err) => this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.error || 'Failed to create user' }),
       });
     }
   }
 
-  confirmDelete(event: Event, user: UserRecord): void {
+  // ─── Actions ───────────────────────────────────────────
+
+  confirmDelete(user: UserRecord): void {
     this.confirmationService.confirm({
       message: `Delete ${user.firstName} ${user.lastName} (${user.email})?`,
       header: 'Confirm Delete',
@@ -361,13 +444,8 @@ export class UserListComponent implements OnInit {
       acceptButtonStyleClass: 'p-button-danger',
       accept: () => {
         this.userService.deleteUser(user.id).subscribe({
-          next: () => {
-            this.messageService.add({ severity: 'success', summary: 'User deleted' });
-            this.loadUsers();
-          },
-          error: (err) => {
-            this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.error || 'Failed to delete user' });
-          },
+          next: () => { this.messageService.add({ severity: 'success', summary: 'User deleted' }); this.loadUsers(); },
+          error: (err) => this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.error || 'Failed to delete' }),
         });
       },
     });
@@ -375,12 +453,8 @@ export class UserListComponent implements OnInit {
 
   sendReset(user: UserRecord): void {
     this.userService.sendPasswordReset(user.id).subscribe({
-      next: (res) => {
-        this.messageService.add({ severity: 'success', summary: 'Reset email sent', detail: res.message });
-      },
-      error: () => {
-        this.messageService.add({ severity: 'error', summary: 'Failed to send reset email' });
-      },
+      next: (res) => this.messageService.add({ severity: 'success', summary: 'Reset email sent', detail: res.message }),
+      error: () => this.messageService.add({ severity: 'error', summary: 'Failed to send reset email' }),
     });
   }
 
@@ -389,16 +463,12 @@ export class UserListComponent implements OnInit {
     if (!id) return;
     this.sendingReset.set(true);
     this.userService.sendPasswordReset(id).subscribe({
-      next: (res) => {
-        this.sendingReset.set(false);
-        this.messageService.add({ severity: 'success', summary: 'Reset email sent', detail: res.message });
-      },
-      error: () => {
-        this.sendingReset.set(false);
-        this.messageService.add({ severity: 'error', summary: 'Failed to send reset email' });
-      },
+      next: (res) => { this.sendingReset.set(false); this.messageService.add({ severity: 'success', summary: 'Reset email sent', detail: res.message }); },
+      error: () => { this.sendingReset.set(false); this.messageService.add({ severity: 'error', summary: 'Failed to send reset email' }); },
     });
   }
+
+  // ─── Password ──────────────────────────────────────────
 
   generatePassword(): void {
     const chars = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%&*';
@@ -408,17 +478,11 @@ export class UserListComponent implements OnInit {
     const digits = '23456789';
 
     let pw = '';
-    // Ensure at least one of each type
     pw += upper[Math.floor(Math.random() * upper.length)];
     pw += lower[Math.floor(Math.random() * lower.length)];
     pw += digits[Math.floor(Math.random() * digits.length)];
     pw += specials[Math.floor(Math.random() * specials.length)];
-
-    for (let i = 4; i < 16; i++) {
-      pw += chars[Math.floor(Math.random() * chars.length)];
-    }
-
-    // Shuffle
+    for (let i = 4; i < 16; i++) pw += chars[Math.floor(Math.random() * chars.length)];
     pw = pw.split('').sort(() => Math.random() - 0.5).join('');
 
     this.form.password = pw;
@@ -446,11 +510,21 @@ export class UserListComponent implements OnInit {
     return Math.min(score, 5);
   }
 
+  // ─── Helpers ───────────────────────────────────────────
+
   getHighestRole(roles: string[]): string {
     if (roles.includes('ROLE_SUPER_ADMIN')) return 'ROLE_SUPER_ADMIN';
     if (roles.includes('ROLE_ADMIN')) return 'ROLE_ADMIN';
     if (roles.includes('ROLE_EDITOR')) return 'ROLE_EDITOR';
     return 'ROLE_USER';
+  }
+
+  getRoleLabel(roles: string[]): string {
+    const r = this.getHighestRole(roles);
+    if (r === 'ROLE_SUPER_ADMIN') return 'Super Admin';
+    if (r === 'ROLE_ADMIN') return 'Admin';
+    if (r === 'ROLE_EDITOR') return 'Editor';
+    return 'User';
   }
 
   getRoleSeverity(roles: string[]): 'danger' | 'warn' | 'info' | 'secondary' {
