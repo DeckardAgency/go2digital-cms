@@ -203,44 +203,45 @@ import { environment } from '../../../../environments/environment';
                 [uploading]="isUploadingImage()"
                 (onUpload)="uploadImage($event)"
                 (onRemove)="removeImage()" />
-              @if (imageUrl()) {
-                <div class="mt-3">
-                  <app-focal-point-picker
-                    [imageUrl]="imageUrl()"
-                    [focalX]="focalX"
-                    [focalY]="focalY"
-                    (focalPointChange)="onFocalPointChange($event)" />
-                </div>
-              }
             } @else {
-              <p class="text-sm text-surface-500 dark:text-surface-400">Save the project first, then upload an image.</p>
+              <div class="flex flex-col items-center justify-center py-6 border-2 border-dashed border-surface-200 dark:border-surface-700 rounded-xl">
+                <i class="pi pi-image text-2xl text-surface-300 dark:text-surface-600 mb-2"></i>
+                <p class="text-xs text-surface-400">Save the project first to upload an image</p>
+              </div>
+            }
+            @if (imageUrl()) {
+              <div class="mt-3">
+                <app-focal-point-picker
+                  [imageUrl]="imageUrl()"
+                  [focalX]="focalX"
+                  [focalY]="focalY"
+                  (focalPointChange)="onFocalPointChange($event)" />
+              </div>
             }
           </div>
 
           <!-- Info Card -->
-          @if (isEditMode()) {
-            <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
-              <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Info</h2>
-              <div class="flex flex-col gap-3 text-sm">
-                <div class="flex justify-between">
-                  <span class="text-surface-500 dark:text-surface-400">Status</span>
-                  <span class="font-medium text-surface-900 dark:text-surface-0 capitalize">{{ status }}</span>
-                </div>
-                @if (createdAt()) {
-                  <div class="flex justify-between">
-                    <span class="text-surface-500 dark:text-surface-400">Created</span>
-                    <span class="font-medium text-surface-900 dark:text-surface-0">{{ createdAt() }}</span>
-                  </div>
-                }
-                @if (updatedAt()) {
-                  <div class="flex justify-between">
-                    <span class="text-surface-500 dark:text-surface-400">Updated</span>
-                    <span class="font-medium text-surface-900 dark:text-surface-0">{{ updatedAt() }}</span>
-                  </div>
-                }
+          <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+            <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Info</h2>
+            <div class="flex flex-col gap-3 text-sm">
+              <div class="flex justify-between">
+                <span class="text-surface-500 dark:text-surface-400">Status</span>
+                <span class="font-medium text-surface-900 dark:text-surface-0 capitalize">{{ status }}</span>
               </div>
+              @if (createdAt()) {
+                <div class="flex justify-between">
+                  <span class="text-surface-500 dark:text-surface-400">Created</span>
+                  <span class="font-medium text-surface-900 dark:text-surface-0">{{ createdAt() }}</span>
+                </div>
+              }
+              @if (updatedAt()) {
+                <div class="flex justify-between">
+                  <span class="text-surface-500 dark:text-surface-400">Updated</span>
+                  <span class="font-medium text-surface-900 dark:text-surface-0">{{ updatedAt() }}</span>
+                </div>
+              }
             </div>
-          }
+          </div>
         </div>
       </div>
     </div>
