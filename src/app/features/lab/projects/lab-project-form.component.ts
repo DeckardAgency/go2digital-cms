@@ -62,34 +62,9 @@ import { environment } from '../../../../environments/environment';
           <!-- Basic Content -->
           <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
             <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-5">Content</h2>
-
-            <!-- Title -->
             <app-translation-editor
               [translations]="translations()"
-              [fields]="titleFields"
-              (translationsChange)="onTranslationsChange($event)" />
-
-            <!-- Slug (between title and subtitle) -->
-            <div class="flex flex-col gap-2 my-4">
-              <div class="flex items-center justify-between">
-                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Slug</label>
-                <button type="button"
-                  class="flex items-center gap-1.5 text-xs font-medium transition-colors"
-                  [class]="slugLocked
-                    ? 'text-surface-400 hover:text-surface-600'
-                    : 'text-primary'"
-                  (click)="slugLocked = !slugLocked">
-                  <i [class]="slugLocked ? 'pi pi-lock' : 'pi pi-lock-open'" class="text-xs"></i>
-                  {{ slugLocked ? 'Auto' : 'Manual' }}
-                </button>
-              </div>
-              <input pInputText class="w-full" [(ngModel)]="slug" [readonly]="slugLocked" [class.opacity-60]="slugLocked" />
-            </div>
-
-            <!-- Subtitle + Intro -->
-            <app-translation-editor
-              [translations]="translations()"
-              [fields]="restFields"
+              [fields]="translationFields"
               (translationsChange)="onTranslationsChange($event)" />
           </div>
 
@@ -193,6 +168,21 @@ import { environment } from '../../../../environments/environment';
               <div class="flex items-center gap-2 pt-1">
                 <p-checkbox [(ngModel)]="featured" [binary]="true" inputId="featured" />
                 <label for="featured" class="text-sm font-medium text-surface-700 dark:text-surface-300">Featured project</label>
+              </div>
+              <div class="flex flex-col gap-2">
+                <div class="flex items-center justify-between">
+                  <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Slug</label>
+                  <button type="button"
+                    class="flex items-center gap-1.5 text-xs font-medium transition-colors"
+                    [class]="slugLocked
+                      ? 'text-surface-400 hover:text-surface-600'
+                      : 'text-primary'"
+                    (click)="slugLocked = !slugLocked">
+                    <i [class]="slugLocked ? 'pi pi-lock' : 'pi pi-lock-open'" class="text-xs"></i>
+                    {{ slugLocked ? 'Auto' : 'Manual' }}
+                  </button>
+                </div>
+                <input pInputText class="w-full" [(ngModel)]="slug" [readonly]="slugLocked" [class.opacity-60]="slugLocked" />
               </div>
             </div>
           </div>
@@ -303,11 +293,8 @@ export class LabProjectFormComponent implements OnInit {
   createdAt = signal('');
   updatedAt = signal('');
 
-  titleFields = [
+  translationFields = [
     { key: 'title', label: 'Title', type: 'text' as const },
-  ];
-
-  restFields = [
     { key: 'subtitle', label: 'Subtitle', type: 'text' as const },
     { key: 'body', label: 'Intro Text', type: 'textarea' as const },
   ];
