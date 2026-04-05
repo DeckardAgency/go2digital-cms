@@ -1,94 +1,96 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
 import { MenuItem, MessageService } from 'primeng/api';
 import { MenuModule } from 'primeng/menu';
-
-import {
-  DataTableWrapperComponent,
-  DataTableCellDirective,
-  DataTableHeaderActionsDirective,
-  DataTableRowActionsDirective,
-  DataTableColumn,
-  DataTableState,
-} from '../../../shared/components/data-table-wrapper';
+import { ToastModule } from 'primeng/toast';
 import { LocationService, City } from '../../../core/services/location.service';
 
 @Component({
   selector: 'app-city-list',
   standalone: true,
-  imports: [
-    CommonModule,
-    TagModule,
-    ButtonModule,
-    DataTableWrapperComponent,
-    DataTableCellDirective,
-    DataTableHeaderActionsDirective,
-    DataTableRowActionsDirective,
-    MenuModule,
-  ],
+  imports: [CommonModule, TableModule, TagModule, ButtonModule, MenuModule, ToastModule],
+  providers: [MessageService],
   template: `
-    <app-data-table-wrapper
-      title="Cities"
-      subtitle="Manage city visibility and order"
-      entityName="cities"
-      [columns]="columns"
-      [data]="cities()"
-      [totalRecords]="cities().length"
-      [loading]="locationService.isLoading()"
-      (stateChange)="onStateChange($event)"
-      (refresh)="loadCities()">
+    <div class="space-y-6">
+      <!-- Header -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <p-button icon="pi pi-arrow-left" severity="secondary" [text]="true" [rounded]="true" (onClick)="router.navigate(['/locations'])" />
+          <div>
+            <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">Cities</h1>
+            <p class="text-surface-500 dark:text-surface-400 text-sm mt-0.5">Drag to reorder, toggle visibility — {{ cities().length }} cities</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <p-button label="Save Order" icon="pi pi-save" [loading]="saving()" [disabled]="!orderChanged()" (onClick)="saveOrder()" />
+          <p-button icon="pi pi-refresh" severity="secondary" [outlined]="true" (onClick)="loadCities()" />
+        </div>
+      </div>
 
-      <!-- Header Actions -->
-      <ng-template dtHeaderActions>
-        <p-button
-          icon="pi pi-arrow-left"
-          label="Back"
-          severity="secondary"
-          [text]="true"
-          (onClick)="router.navigate(['/locations'])" />
-      </ng-template>
+      <!-- Sortable Table -->
+      <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700">
+        <p-table
+          [value]="cities()"
+          (onRowReorder)="onRowReorder($event)"
+          [rowHover]="true"
+          styleClass="p-datatable-sm">
 
-      <!-- Custom Cells -->
-      <ng-template dtCell="name" let-row>
-        <span class="font-medium text-surface-900 dark:text-surface-100">{{ row.name }}</span>
-      </ng-template>
+          <ng-template pTemplate="header">
+            <tr>
+              <th style="width: 3rem"></th>
+              <th style="width: 3rem">#</th>
+              <th>City</th>
+              <th style="width: 100px">Totems</th>
+              <th style="width: 110px">Status</th>
+              <th style="width: 4rem"></th>
+            </tr>
+          </ng-template>
 
-      <ng-template dtCell="totemCount" let-row>
-        {{ row.totemCount }}
-      </ng-template>
+          <ng-template pTemplate="body" let-city let-index="rowIndex">
+            <tr [pReorderableRow]="index">
+              <td>
+                <span class="pi pi-bars cursor-grab text-surface-400" pReorderableRowHandle></span>
+              </td>
+              <td>
+                <span class="text-surface-400 text-xs">{{ index + 1 }}</span>
+              </td>
+              <td>
+                <span class="font-medium text-surface-900 dark:text-surface-100">{{ city.name }}</span>
+              </td>
+              <td>
+                <span class="text-surface-600">{{ city.totemCount }}</span>
+              </td>
+              <td>
+                <p-tag
+                  [value]="city.isActive ? 'Active' : 'Inactive'"
+                  [severity]="city.isActive ? 'success' : 'danger'" />
+              </td>
+              <td>
+                <p-button
+                  icon="pi pi-ellipsis-v"
+                  [text]="true"
+                  [rounded]="true"
+                  severity="secondary"
+                  (onClick)="currentRow = city; rowMenu.toggle($event)" />
+                <p-menu #rowMenu [model]="getRowMenuItems(city)" [popup]="true" appendTo="body" />
+              </td>
+            </tr>
+          </ng-template>
 
-      <ng-template dtCell="sortOrder" let-row>
-        {{ row.sortOrder }}
-      </ng-template>
+          <ng-template pTemplate="summary">
+            <div class="text-sm text-surface-500 dark:text-surface-400 px-4 py-3">
+              {{ cities().length }} cities — drag rows to reorder, then click "Save Order"
+            </div>
+          </ng-template>
+        </p-table>
+      </div>
 
-      <ng-template dtCell="isActive" let-row>
-        <p-tag
-          [value]="row.isActive ? 'Active' : 'Inactive'"
-          [severity]="row.isActive ? 'success' : 'danger'" />
-      </ng-template>
-
-      <ng-template dtCell="lastSyncedAt" let-row>
-        @if (row.lastSyncedAt) {
-          {{ row.lastSyncedAt | date:'dd.MM.yyyy HH:mm' }}
-        } @else {
-          <span class="text-surface-400">--</span>
-        }
-      </ng-template>
-
-      <!-- Row Actions -->
-      <ng-template dtRowActions let-row>
-        <p-button
-          icon="pi pi-ellipsis-v"
-          [text]="true"
-          [rounded]="true"
-          severity="secondary"
-          (onClick)="setCurrentRow(row); rowMenu.toggle($event)" />
-        <p-menu #rowMenu [model]="getRowMenuItems(row)" [popup]="true" appendTo="body" />
-      </ng-template>
-    </app-data-table-wrapper>
+      <p-toast></p-toast>
+    </div>
   `,
 })
 export class CityListComponent implements OnInit {
@@ -97,15 +99,9 @@ export class CityListComponent implements OnInit {
   private readonly messageService = inject(MessageService);
 
   cities = signal<City[]>([]);
+  saving = signal(false);
+  orderChanged = signal(false);
   currentRow: City | null = null;
-
-  columns: DataTableColumn[] = [
-    { key: 'name', label: 'Name', defaultVisible: true },
-    { key: 'totemCount', label: 'Totems', defaultVisible: true, width: '100px' },
-    { key: 'sortOrder', label: 'Sort Order', defaultVisible: true, width: '120px' },
-    { key: 'isActive', label: 'Status', defaultVisible: true, width: '110px' },
-    { key: 'lastSyncedAt', label: 'Last Synced', defaultVisible: true, width: '160px' },
-  ];
 
   ngOnInit(): void {
     this.loadCities();
@@ -113,19 +109,47 @@ export class CityListComponent implements OnInit {
 
   loadCities(): void {
     this.locationService.getCities().subscribe({
-      next: (cities) => this.cities.set(cities),
-      error: () => {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load cities' });
+      next: (cities) => {
+        this.cities.set(cities);
+        this.orderChanged.set(false);
       },
+      error: () => this.messageService.add({ severity: 'error', summary: 'Failed to load cities' }),
     });
   }
 
-  onStateChange(state: DataTableState): void {
-    this.loadCities();
+  onRowReorder(event: any): void {
+    // PrimeNG already reorders the array in-place
+    this.orderChanged.set(true);
   }
 
-  setCurrentRow(row: City): void {
-    this.currentRow = row;
+  saveOrder(): void {
+    this.saving.set(true);
+    const updates = this.cities().map((city, index) => ({
+      id: city.id,
+      sortOrder: index + 1,
+    }));
+
+    // Save each city's new sortOrder
+    let completed = 0;
+    for (const update of updates) {
+      this.locationService.updateCity(update.id, { sortOrder: update.sortOrder }).subscribe({
+        next: () => {
+          completed++;
+          if (completed === updates.length) {
+            this.saving.set(false);
+            this.orderChanged.set(false);
+            this.messageService.add({ severity: 'success', summary: 'Order saved', detail: `${updates.length} cities reordered` });
+          }
+        },
+        error: () => {
+          completed++;
+          if (completed === updates.length) {
+            this.saving.set(false);
+            this.messageService.add({ severity: 'error', summary: 'Failed to save some orders' });
+          }
+        },
+      });
+    }
   }
 
   getRowMenuItems(row: City): MenuItem[] {
@@ -148,14 +172,11 @@ export class CityListComponent implements OnInit {
       next: () => {
         this.messageService.add({
           severity: 'success',
-          summary: 'Updated',
-          detail: `${city.name} ${city.isActive ? 'deactivated' : 'activated'}`,
+          summary: `${city.name} ${city.isActive ? 'deactivated' : 'activated'}`,
         });
         this.loadCities();
       },
-      error: () => {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to update city' });
-      },
+      error: () => this.messageService.add({ severity: 'error', summary: 'Failed to update' }),
     });
   }
 }
