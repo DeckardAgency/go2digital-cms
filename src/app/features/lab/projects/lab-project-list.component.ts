@@ -18,6 +18,7 @@ import {
   DataTableColumn,
   DataTableState,
   FilterChip,
+  BulkAction,
 } from '../../../shared/components/data-table-wrapper';
 import { LabService, LabProjectListParams } from '../../../core/services/lab.service';
 import { LabProject, LabCategory } from '../../../core/models/lab.model';
@@ -49,10 +50,13 @@ import { LabProject, LabCategory } from '../../../core/models/lab.model';
       [totalRecords]="totalRecords()"
       [loading]="labService.isLoading()"
       [filterChips]="filterChips()"
+      [showSelection]="true"
+      [bulkActions]="bulkActions"
       (stateChange)="onStateChange($event)"
       (rowClick)="onRowClick($event)"
       (filterChipRemove)="onFilterChipRemove($event)"
       (filtersClear)="onFiltersClear()"
+      (bulkAction)="onBulkAction($event)"
       (refresh)="loadProjects()">
 
       <!-- Header Actions -->
@@ -178,6 +182,10 @@ export class LabProjectListComponent implements OnInit {
     }
   ];
 
+  bulkActions: BulkAction[] = [
+    { label: 'Delete selected', value: 'delete' },
+  ];
+
   statusOptions = [
     { label: 'Published', value: 'published' },
     { label: 'Draft', value: 'draft' },
@@ -256,6 +264,36 @@ export class LabProjectListComponent implements OnInit {
 
   setCurrentRow(row: any): void {
     this.currentRow = row;
+  }
+
+  onBulkAction(event: { action: string; selected: any[] }): void {
+    if (event.action === 'delete') {
+      this.confirmationService.confirm({
+        message: `Delete ${event.selected.length} selected project(s)?`,
+        header: 'Confirm Bulk Delete',
+        icon: 'pi pi-exclamation-triangle',
+        acceptButtonStyleClass: 'p-button-danger',
+        accept: () => {
+          let completed = 0;
+          const total = event.selected.length;
+          for (const project of event.selected) {
+            this.labService.deleteProject(project.id).subscribe({
+              next: () => {
+                completed++;
+                if (completed === total) {
+                  this.messageService.add({ severity: 'success', summary: `${total} project(s) deleted` });
+                  this.loadProjects();
+                }
+              },
+              error: () => {
+                completed++;
+                if (completed === total) this.loadProjects();
+              },
+            });
+          }
+        },
+      });
+    }
   }
 
   confirmDelete(project: LabProject): void {
