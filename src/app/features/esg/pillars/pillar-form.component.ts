@@ -14,61 +14,57 @@ import { EsgService } from '../../../core/services/esg.service';
   selector: 'app-pillar-form',
   standalone: true,
   imports: [
-    CommonModule,
-    FormsModule,
-    InputTextModule,
-    InputNumberModule,
-    ButtonModule,
-    TranslationEditorComponent,
+    CommonModule, FormsModule, InputTextModule, InputNumberModule,
+    ButtonModule, TranslationEditorComponent,
   ],
   template: `
-    <div class="max-w-2xl">
+    <div class="space-y-6">
       <!-- Header -->
-      <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <p-button
-            icon="pi pi-arrow-left"
-            severity="secondary"
-            [text]="true"
-            (onClick)="router.navigate(['/esg/pillars'])" />
-          <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">
-            {{ isEditMode() ? 'Edit Pillar' : 'New Pillar' }}
-          </h1>
+          <p-button icon="pi pi-arrow-left" severity="secondary" [text]="true" [rounded]="true" (onClick)="router.navigate(['/esg/pillars'])" />
+          <div>
+            <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">
+              {{ isEditMode() ? 'Edit Pillar' : 'New Pillar' }}
+            </h1>
+            <p class="text-surface-500 dark:text-surface-400 text-sm mt-0.5">
+              {{ isEditMode() ? 'Update ESG pillar details' : 'Create a new ESG pillar' }}
+            </p>
+          </div>
         </div>
         <div class="flex items-center gap-2">
-          <p-button
-            label="Cancel"
-            severity="secondary"
-            [outlined]="true"
-            (onClick)="router.navigate(['/esg/pillars'])" />
-          <p-button
-            label="Save"
-            icon="pi pi-check"
-            [loading]="esgService.isLoading()"
-            (onClick)="onSave()" />
+          <p-button label="Save" icon="pi pi-save" [loading]="esgService.isLoading()" (onClick)="onSave()" />
         </div>
       </div>
 
-      <!-- Translations -->
-      <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-5 mb-5">
-        <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Content</h2>
-        <app-translation-editor
-          [translations]="translations()"
-          [fields]="translationFields"
-          (translationsChange)="translations.set($event)" />
-      </div>
-
-      <!-- Meta Fields -->
-      <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-5">
-        <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Details</h2>
-        <div class="flex flex-col gap-4">
-          <div class="flex flex-col gap-2">
-            <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Icon</label>
-            <input pInputText class="w-full" [(ngModel)]="icon" />
+      <!-- Two-column layout -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- LEFT: Content (2/3) -->
+        <div class="lg:col-span-2 space-y-6">
+          <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+            <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-5">Content</h2>
+            <app-translation-editor
+              [translations]="translations()"
+              [fields]="translationFields"
+              (translationsChange)="translations.set($event)" />
           </div>
-          <div class="flex flex-col gap-2">
-            <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Sort Order</label>
-            <p-inputNumber [(ngModel)]="sortOrder" [showButtons]="true" class="w-full" />
+        </div>
+
+        <!-- RIGHT: Settings (1/3) -->
+        <div class="space-y-6">
+          <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+            <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-5">Settings</h2>
+            <div class="flex flex-col gap-4">
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Icon</label>
+                <input pInputText class="w-full" [(ngModel)]="icon" placeholder="pi pi-globe" />
+                <span class="text-xs text-surface-400">PrimeIcons class name</span>
+              </div>
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Sort Order</label>
+                <p-inputNumber [(ngModel)]="sortOrder" [showButtons]="true" styleClass="w-full" inputStyleClass="w-full" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -111,7 +107,6 @@ export class PillarFormComponent implements OnInit {
       next: (item) => {
         this.icon = item.icon || '';
         this.sortOrder = item.sortOrder || 0;
-
         if (item.translations) {
           this.translations.set({
             hr: { title: item.translations.hr?.title || '', description: item.translations.hr?.description || '' },
@@ -127,28 +122,17 @@ export class PillarFormComponent implements OnInit {
   }
 
   onSave(): void {
-    const payload: any = {
-      icon: this.icon,
-      sortOrder: this.sortOrder,
-      translations: this.translations(),
-    };
-
+    const payload: any = { icon: this.icon, sortOrder: this.sortOrder, translations: this.translations() };
     const request$ = this.isEditMode()
       ? this.esgService.updatePillar(this.itemId()!, payload)
       : this.esgService.createPillar(payload);
 
     request$.subscribe({
       next: () => {
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: this.isEditMode() ? 'Pillar updated successfully' : 'Pillar created successfully',
-        });
+        this.messageService.add({ severity: 'success', summary: this.isEditMode() ? 'Pillar updated' : 'Pillar created' });
         this.router.navigate(['/esg/pillars']);
       },
-      error: () => {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to save pillar' });
-      },
+      error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to save pillar' }),
     });
   }
 }
