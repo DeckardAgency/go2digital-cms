@@ -92,6 +92,8 @@ export const routes: Routes = [
       { path: 'media', loadComponent: () => import('./features/media/media-page.component').then(m => m.MediaPageComponent) },
       // Files
       { path: 'files', loadComponent: () => import('./features/files/files-page.component').then(m => m.FilesPageComponent) },
+      // Profile
+      { path: 'profile', loadComponent: () => import('./features/profile/profile-page.component').then(m => m.ProfilePageComponent) },
       // Users
       { path: 'users', loadComponent: () => import('./features/users/user-list.component').then(m => m.UserListComponent) },
       // Settings

@@ -29,7 +29,8 @@ export class SidebarComponent {
   selectedModule = signal<NavModule | null>(null);
 
   userMenuItems: MenuItem[] = [
-    { label: 'Settings', icon: 'pi pi-cog', routerLink: '/settings' },
+    { label: 'Profile', icon: 'pi pi-user', routerLink: '/profile' },
+    { label: 'Settings', icon: 'pi pi-cog', routerLink: '/settings/general' },
     { separator: true },
     { label: 'Logout', icon: 'pi pi-sign-out', command: () => this.authService.logout() }
   ];
