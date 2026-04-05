@@ -106,7 +106,7 @@ import { AuthService } from '../../core/services/auth.service';
       </ng-template>
 
       <ng-template dtCell="status" let-row>
-        <p-tag [value]="row.isActive ? 'Active' : 'Inactive'" [severity]="row.isActive ? 'success' : 'danger'" />
+        <p-toggleswitch [(ngModel)]="row.isActive" (ngModelChange)="toggleActive(row)" />
       </ng-template>
 
       <ng-template dtCell="createdAt" let-row>
@@ -435,6 +435,16 @@ export class UserListComponent implements OnInit {
   }
 
   // ─── Actions ───────────────────────────────────────────
+
+  toggleActive(user: UserRecord): void {
+    this.userService.updateUser(user.id, { isActive: user.isActive }).subscribe({
+      next: () => this.messageService.add({ severity: 'success', summary: user.isActive ? 'User activated' : 'User deactivated' }),
+      error: () => {
+        user.isActive = !user.isActive;
+        this.messageService.add({ severity: 'error', summary: 'Failed to update user' });
+      },
+    });
+  }
 
   confirmDelete(user: UserRecord): void {
     this.confirmationService.confirm({
