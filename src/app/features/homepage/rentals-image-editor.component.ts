@@ -11,7 +11,8 @@ import { SingletonEditorComponent, SingletonTranslatableField } from './singleto
       pageTitle="Rentals Image"
       subtitle="Full-width section with overlay text"
       [sectionPosition]="11"
-      [translatableFields]="fields">
+      [translatableFields]="fields"
+      imageField="image">
       <div preview>
         <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
           <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Preview</h2>
