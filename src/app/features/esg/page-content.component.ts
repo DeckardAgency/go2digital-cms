@@ -6,6 +6,7 @@ import { ButtonModule } from 'primeng/button';
 import { MessageService } from 'primeng/api';
 
 import { TranslationEditorComponent } from '../../shared/components/translation-editor/translation-editor.component';
+import { SeoEditorComponent } from '../../shared/components/seo-editor/seo-editor.component';
 import { EsgService } from '../../core/services/esg.service';
 
 @Component({
@@ -17,6 +18,7 @@ import { EsgService } from '../../core/services/esg.service';
     InputTextModule,
     ButtonModule,
     TranslationEditorComponent,
+    SeoEditorComponent,
   ],
   template: `
     <div class="max-w-4xl">
@@ -40,6 +42,8 @@ import { EsgService } from '../../core/services/esg.service';
           [fields]="translationFields"
           (translationsChange)="translations.set($event)" />
       </div>
+
+      <app-seo-editor singletonType="esg-page" />
     </div>
   `,
 })

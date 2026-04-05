@@ -12,6 +12,7 @@ import { MessageService } from 'primeng/api';
 import { TranslationEditorComponent } from '../../../shared/components/translation-editor/translation-editor.component';
 import { ImageUploadComponent } from '../../../shared/components/image-upload/image-upload.component';
 import { FocalPointPickerComponent } from '../../../shared/components/focal-point-picker/focal-point-picker.component';
+import { SeoEditorComponent } from '../../../shared/components/seo-editor/seo-editor.component';
 import { LabService } from '../../../core/services/lab.service';
 import { LabCategory } from '../../../core/models/lab.model';
 import { environment } from '../../../../environments/environment';
@@ -22,6 +23,7 @@ import { environment } from '../../../../environments/environment';
   imports: [
     CommonModule, FormsModule, InputTextModule, SelectModule,
     CheckboxModule, ButtonModule, TranslationEditorComponent, ImageUploadComponent, FocalPointPickerComponent,
+    SeoEditorComponent,
   ],
   template: `
     <div class="space-y-6">
@@ -72,6 +74,10 @@ import { environment } from '../../../../environments/environment';
               [fields]="translationFields"
               (translationsChange)="translations.set($event)" />
           </div>
+
+          @if (isEditMode()) {
+            <app-seo-editor entityType="lab-projects" [entityId]="projectId()!" />
+          }
         </div>
 
         <!-- RIGHT: Sidebar (1/3 width) -->

@@ -8,6 +8,7 @@ import { ButtonModule } from 'primeng/button';
 import { MessageService } from 'primeng/api';
 
 import { TranslationEditorComponent } from '../../shared/components/translation-editor/translation-editor.component';
+import { SeoEditorComponent } from '../../shared/components/seo-editor/seo-editor.component';
 import { PageService } from '../../core/services/page.service';
 
 @Component({
@@ -20,6 +21,7 @@ import { PageService } from '../../core/services/page.service';
     SelectModule,
     ButtonModule,
     TranslationEditorComponent,
+    SeoEditorComponent,
   ],
   template: `
     <div class="max-w-2xl">
@@ -57,6 +59,10 @@ import { PageService } from '../../core/services/page.service';
           [fields]="translationFields"
           (translationsChange)="translations.set($event)" />
       </div>
+
+      @if (isEditMode()) {
+        <app-seo-editor entityType="pages" [entityId]="itemId()!" />
+      }
 
       <!-- Meta Fields -->
       <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-5">

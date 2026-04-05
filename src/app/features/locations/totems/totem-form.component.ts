@@ -12,6 +12,7 @@ import { ButtonModule } from 'primeng/button';
 import { MessageService } from 'primeng/api';
 
 import { LocationService, TotemDetail } from '../../../core/services/location.service';
+import { SeoEditorComponent } from '../../../shared/components/seo-editor/seo-editor.component';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -20,6 +21,7 @@ import { environment } from '../../../../environments/environment';
   imports: [
     CommonModule, FormsModule, InputTextModule, TextareaModule,
     ToggleSwitchModule, InputNumberModule, ButtonModule,
+    SeoEditorComponent,
   ],
   template: `
     <div class="space-y-6">
@@ -110,6 +112,8 @@ import { environment } from '../../../../environments/environment';
               }
             </div>
           </div>
+
+          <app-seo-editor entityType="totems" [entityId]="totemId()!" />
 
         </div>
 

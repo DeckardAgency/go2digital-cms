@@ -14,6 +14,7 @@ import { TranslationEditorComponent } from '../../../shared/components/translati
 import { ImageUploadComponent } from '../../../shared/components/image-upload/image-upload.component';
 import { BlogService } from '../../../core/services/blog.service';
 import { FocalPointPickerComponent } from '../../../shared/components/focal-point-picker/focal-point-picker.component';
+import { SeoEditorComponent } from '../../../shared/components/seo-editor/seo-editor.component';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -23,6 +24,7 @@ import { environment } from '../../../../environments/environment';
     CommonModule, FormsModule, InputTextModule, SelectModule,
     DatePickerModule, CheckboxModule, ButtonModule,
     TranslationEditorComponent, ImageUploadComponent, FocalPointPickerComponent,
+    SeoEditorComponent,
   ],
   template: `
     <div class="space-y-6">
@@ -75,6 +77,10 @@ import { environment } from '../../../../environments/environment';
               [fields]="translationFields"
               (translationsChange)="translations.set($event)" />
           </div>
+
+          @if (isEditMode()) {
+            <app-seo-editor entityType="blog-posts" [entityId]="postId()!" />
+          }
 
         </div>
 
