@@ -2,6 +2,7 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
@@ -11,6 +12,7 @@ import { ButtonModule } from 'primeng/button';
 import { MessageService } from 'primeng/api';
 
 import { LocationService, TotemDetail } from '../../../core/services/location.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-totem-form',
@@ -178,6 +180,27 @@ import { LocationService, TotemDetail } from '../../../core/services/location.se
                 </div>
               }
             </div>
+            <div class="mt-4 pt-4 border-t border-surface-200 dark:border-surface-700">
+              <p-button
+                label="Sync this totem from CDN"
+                icon="pi pi-sync"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                styleClass="w-full"
+                [loading]="isSyncingTotem()"
+                (onClick)="syncTotem()" />
+              @if (syncResult()) {
+                <div class="mt-3 text-xs bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                  <div class="flex items-center gap-1.5 text-green-700 dark:text-green-400 font-medium mb-1">
+                    <i class="pi pi-check-circle text-xs"></i> Synced
+                  </div>
+                  <div class="text-surface-500">
+                    {{ syncResult()!.updatedFields.length }} fields updated, {{ syncResult()!.skippedFields.length }} skipped (manual)
+                  </div>
+                </div>
+              }
+            </div>
           </div>
         </div>
       </div>
@@ -190,6 +213,7 @@ export class TotemFormComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly messageService = inject(MessageService);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly http = inject(HttpClient);
 
   youtubeEmbedUrl = signal<SafeResourceUrl | null>(null);
 
@@ -238,6 +262,8 @@ export class TotemFormComponent implements OnInit {
   cdnTotemId = 0;
   lastSyncedAt: string | null = null;
   manualOverrides: string[] = [];
+  isSyncingTotem = signal(false);
+  syncResult = signal<{ updatedFields: string[]; skippedFields: string[] } | null>(null);
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -311,6 +337,29 @@ export class TotemFormComponent implements OnInit {
       },
       error: () => {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to save totem' });
+      },
+    });
+  }
+
+  syncTotem(): void {
+    const id = this.totemId();
+    if (!id) return;
+
+    this.isSyncingTotem.set(true);
+    this.syncResult.set(null);
+
+    this.http.post<any>(`${environment.apiUrl}/locations/totems/${id}/sync`, {}).subscribe({
+      next: (res) => {
+        this.isSyncingTotem.set(false);
+        this.syncResult.set({ updatedFields: res.updatedFields || [], skippedFields: res.skippedFields || [] });
+        this.lastSyncedAt = res.syncedAt;
+        this.messageService.add({ severity: 'success', summary: 'Totem synced from CDN' });
+        // Reload data to show updated values
+        this.loadTotem(id);
+      },
+      error: (err) => {
+        this.isSyncingTotem.set(false);
+        this.messageService.add({ severity: 'error', summary: 'Sync failed', detail: err.error?.error || 'Unknown error' });
       },
     });
   }
