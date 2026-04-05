@@ -105,7 +105,7 @@ export class BlogService {
     this._isLoading.set(true);
     const headers = new HttpHeaders({ 'Content-Type': 'application/ld+json' });
 
-    return this.http.post<BlogCategory>(`${this.apiUrl}/blog_categories`, data, { headers }).pipe(
+    return this.http.post<BlogCategory>(`${this.apiUrl}/blog-categories`, data, { headers }).pipe(
       finalize(() => this._isLoading.set(false))
     );
   }
@@ -114,7 +114,7 @@ export class BlogService {
     this._isLoading.set(true);
     const headers = new HttpHeaders({ 'Content-Type': 'application/merge-patch+json' });
 
-    return this.http.patch<BlogCategory>(`${this.apiUrl}/blog_categories/${id}`, data, { headers }).pipe(
+    return this.http.put<BlogCategory>(`${this.apiUrl}/blog-categories/${id}`, data, { headers }).pipe(
       finalize(() => this._isLoading.set(false))
     );
   }

@@ -105,7 +105,7 @@ export class LabService {
     this._isLoading.set(true);
     const headers = new HttpHeaders({ 'Content-Type': 'application/ld+json' });
 
-    return this.http.post<LabCategory>(`${this.apiUrl}/lab_categories`, data, { headers }).pipe(
+    return this.http.post<LabCategory>(`${this.apiUrl}/lab-categories`, data, { headers }).pipe(
       finalize(() => this._isLoading.set(false))
     );
   }
@@ -114,7 +114,7 @@ export class LabService {
     this._isLoading.set(true);
     const headers = new HttpHeaders({ 'Content-Type': 'application/merge-patch+json' });
 
-    return this.http.patch<LabCategory>(`${this.apiUrl}/lab_categories/${id}`, data, { headers }).pipe(
+    return this.http.put<LabCategory>(`${this.apiUrl}/lab-categories/${id}`, data, { headers }).pipe(
       finalize(() => this._isLoading.set(false))
     );
   }
