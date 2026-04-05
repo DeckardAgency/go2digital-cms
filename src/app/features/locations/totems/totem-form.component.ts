@@ -1,6 +1,7 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
@@ -89,8 +90,22 @@ import { LocationService, TotemDetail } from '../../../core/services/location.se
               </div>
               <div class="flex flex-col gap-2">
                 <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Video URL</label>
-                <input pInputText class="w-full" [(ngModel)]="videoUrl" />
+                <input pInputText class="w-full" [(ngModel)]="videoUrl" placeholder="https://www.youtube.com/watch?v=..." />
               </div>
+              @if (youtubeEmbedUrl()) {
+                <div class="mt-1">
+                  <label class="text-sm font-medium text-surface-700 dark:text-surface-300 mb-2 block">Preview</label>
+                  <div class="rounded-lg overflow-hidden border border-surface-200 dark:border-surface-700" style="aspect-ratio: 16/9;">
+                    <iframe
+                      [src]="youtubeEmbedUrl()"
+                      class="w-full h-full"
+                      frameborder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowfullscreen>
+                    </iframe>
+                  </div>
+                </div>
+              }
             </div>
           </div>
 
@@ -176,6 +191,26 @@ export class TotemFormComponent implements OnInit {
   readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly messageService = inject(MessageService);
+  private readonly sanitizer = inject(DomSanitizer);
+
+  youtubeEmbedUrl = computed((): SafeResourceUrl | null => {
+    const url = this.videoUrl;
+    if (!url) return null;
+
+    let videoId = '';
+    // youtube.com/watch?v=ID
+    const match1 = url.match(/[?&]v=([^&]+)/);
+    if (match1) videoId = match1[1];
+    // youtu.be/ID
+    const match2 = url.match(/youtu\.be\/([^?&]+)/);
+    if (match2) videoId = match2[1];
+    // youtube.com/embed/ID
+    const match3 = url.match(/embed\/([^?&]+)/);
+    if (match3) videoId = match3[1];
+
+    if (!videoId) return null;
+    return this.sanitizer.bypassSecurityTrustResourceUrl(`https://www.youtube.com/embed/${videoId}`);
+  });
 
   totemId = signal<string | null>(null);
 
