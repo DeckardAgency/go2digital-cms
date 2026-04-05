@@ -65,7 +65,27 @@ import { environment } from '../../../../environments/environment';
             <app-translation-editor
               [translations]="translations()"
               [fields]="translationFields"
-              (translationsChange)="translations.set($event)" />
+              (translationsChange)="onTranslationsChange($event)" />
+
+            <!-- Slug -->
+            <div class="flex flex-col gap-2 mt-5 pt-5 border-t border-surface-200 dark:border-surface-700">
+              <div class="flex items-center justify-between">
+                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Slug</label>
+                <button type="button"
+                  class="flex items-center gap-1.5 text-xs font-medium transition-colors"
+                  [class]="slugLocked
+                    ? 'text-surface-400 hover:text-surface-600'
+                    : 'text-primary'"
+                  (click)="slugLocked = !slugLocked">
+                  <i [class]="slugLocked ? 'pi pi-lock' : 'pi pi-lock-open'" class="text-xs"></i>
+                  {{ slugLocked ? 'Auto' : 'Manual' }}
+                </button>
+              </div>
+              <input pInputText class="w-full" [(ngModel)]="slug" [readonly]="slugLocked" [class.opacity-60]="slugLocked" />
+              @if (slugLocked) {
+                <span class="text-xs text-surface-400">Auto-generated from title. Click lock to edit manually.</span>
+              }
+            </div>
           </div>
 
           <!-- ═══ SECTIONS EDITOR ═══ -->
@@ -169,10 +189,6 @@ import { environment } from '../../../../environments/environment';
                 <p-checkbox [(ngModel)]="featured" [binary]="true" inputId="featured" />
                 <label for="featured" class="text-sm font-medium text-surface-700 dark:text-surface-300">Featured project</label>
               </div>
-              <div class="flex flex-col gap-2">
-                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Slug</label>
-                <input pInputText class="w-full" [(ngModel)]="slug" />
-              </div>
             </div>
           </div>
 
@@ -270,6 +286,7 @@ export class LabProjectFormComponent implements OnInit {
   ];
 
   slug = '';
+  slugLocked = true;
   status = 'draft';
   featured = false;
   selectedCategoryIds: string[] = [];
@@ -312,6 +329,7 @@ export class LabProjectFormComponent implements OnInit {
     this.labService.getProject(id).subscribe({
       next: (project) => {
         this.slug = project.slug;
+        this.slugLocked = true;
         this.status = project.status;
         this.featured = project.featured;
         this.selectedCategoryIds = (project.categories || []).map((c: any) =>
@@ -344,6 +362,28 @@ export class LabProjectFormComponent implements OnInit {
         this.router.navigate(['/lab/projects']);
       },
     });
+  }
+
+  onTranslationsChange(translations: any): void {
+    this.translations.set(translations);
+    if (this.slugLocked) {
+      const title = translations.hr?.title || translations.en?.title || '';
+      this.slug = this.generateSlug(title);
+    }
+  }
+
+  private generateSlug(text: string): string {
+    const charMap: Record<string, string> = {
+      'č': 'c', 'ć': 'c', 'đ': 'dj', 'š': 's', 'ž': 'z',
+      'Č': 'c', 'Ć': 'c', 'Đ': 'dj', 'Š': 's', 'Ž': 'z',
+      'ä': 'ae', 'ö': 'oe', 'ü': 'ue', 'ß': 'ss',
+    };
+    return text
+      .split('').map(c => charMap[c] || c).join('')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
   }
 
   // ─── Sections ──────────────────────────────────────────
