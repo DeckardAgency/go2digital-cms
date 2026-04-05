@@ -10,6 +10,19 @@ export interface Setting {
   group: string;
 }
 
+export interface BackupInfo {
+  filename: string;
+  size: string;
+  date: string;
+}
+
+export interface SystemInfo {
+  php: string;
+  symfony: string;
+  environment: string;
+  debug: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SettingsService {
   private readonly apiUrl = environment.apiUrl;
@@ -21,43 +34,47 @@ export class SettingsService {
 
   getSettings(): Observable<Setting[]> {
     this._isLoading.set(true);
-
     return this.http.get<Setting[]>(`${this.apiUrl}/settings`).pipe(
       finalize(() => this._isLoading.set(false))
     );
   }
 
   getSetting(id: string): Observable<Setting> {
-    this._isLoading.set(true);
-
-    return this.http.get<Setting>(`${this.apiUrl}/settings/${id}`).pipe(
-      finalize(() => this._isLoading.set(false))
-    );
+    return this.http.get<Setting>(`${this.apiUrl}/settings/${id}`);
   }
 
   createSetting(data: Partial<Setting>): Observable<Setting> {
-    this._isLoading.set(true);
     const headers = new HttpHeaders({ 'Content-Type': 'application/ld+json' });
-
-    return this.http.post<Setting>(`${this.apiUrl}/settings`, data, { headers }).pipe(
-      finalize(() => this._isLoading.set(false))
-    );
+    return this.http.post<Setting>(`${this.apiUrl}/settings`, data, { headers });
   }
 
   updateSetting(id: string, data: Partial<Setting>): Observable<Setting> {
-    this._isLoading.set(true);
     const headers = new HttpHeaders({ 'Content-Type': 'application/merge-patch+json' });
-
-    return this.http.patch<Setting>(`${this.apiUrl}/settings/${id}`, data, { headers }).pipe(
-      finalize(() => this._isLoading.set(false))
-    );
+    return this.http.patch<Setting>(`${this.apiUrl}/settings/${id}`, data, { headers });
   }
 
   deleteSetting(id: string): Observable<void> {
-    this._isLoading.set(true);
+    return this.http.delete<void>(`${this.apiUrl}/settings/${id}`);
+  }
 
-    return this.http.delete<void>(`${this.apiUrl}/settings/${id}`).pipe(
-      finalize(() => this._isLoading.set(false))
-    );
+  // Maintenance
+  clearCache(): Observable<{ success: boolean; output: string }> {
+    return this.http.post<any>(`${this.apiUrl}/maintenance/cache/clear`, {});
+  }
+
+  warmupCache(): Observable<{ success: boolean; output: string }> {
+    return this.http.post<any>(`${this.apiUrl}/maintenance/cache/warmup`, {});
+  }
+
+  createBackup(): Observable<{ success: boolean; filename: string; size: string }> {
+    return this.http.post<any>(`${this.apiUrl}/maintenance/database/backup`, {});
+  }
+
+  listBackups(): Observable<BackupInfo[]> {
+    return this.http.get<BackupInfo[]>(`${this.apiUrl}/maintenance/database/backups`);
+  }
+
+  getSystemInfo(): Observable<SystemInfo> {
+    return this.http.get<SystemInfo>(`${this.apiUrl}/maintenance/info`);
   }
 }
