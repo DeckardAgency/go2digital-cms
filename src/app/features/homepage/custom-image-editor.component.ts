@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { SingletonEditorComponent, SingletonTranslatableField } from './singleton-editor.component';
+import { SingletonEditorComponent, SingletonTranslatableField, SingletonImageField } from './singleton-editor.component';
 
 @Component({
   selector: 'app-custom-image-editor',
@@ -11,7 +11,8 @@ import { SingletonEditorComponent, SingletonTranslatableField } from './singleto
       pageTitle="Custom Image"
       subtitle="Full-width parallax image with alt text"
       [sectionPosition]="4"
-      [translatableFields]="fields">
+      [translatableFields]="fields"
+      [imageFields]="images">
       <div preview>
         <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
           <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Preview</h2>
@@ -29,5 +30,10 @@ import { SingletonEditorComponent, SingletonTranslatableField } from './singleto
 export class CustomImageEditorComponent {
   fields: SingletonTranslatableField[] = [
     { key: 'alt', label: 'Alt Text', type: 'text' },
+  ];
+
+  images: SingletonImageField[] = [
+    { key: 'desktopImage', label: 'Desktop Image' },
+    { key: 'mobileImage', label: 'Mobile Image' },
   ];
 }

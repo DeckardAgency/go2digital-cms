@@ -26,6 +26,11 @@ export interface SingletonNonTranslatableField {
   type: 'text' | 'number' | 'checkbox';
 }
 
+export interface SingletonImageField {
+  key: string;
+  label: string;
+}
+
 @Component({
   selector: 'app-singleton-editor',
   standalone: true,
@@ -114,58 +119,47 @@ export interface SingletonNonTranslatableField {
           <!-- Preview (projected content) -->
           <ng-content select="[preview]"></ng-content>
 
-          <!-- Image upload (if imageField is set) -->
-          @if (imageField) {
+          <!-- Image uploads -->
+          @for (imgField of allImageFields(); track imgField.key) {
             <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
-              <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Image</h2>
+              <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">{{ imgField.label }}</h2>
               <app-image-upload
-                [currentImageUrl]="imageUrl()"
-                [uploading]="uploadingImage()"
-                (onUpload)="onImageUpload($event)"
-                (onRemove)="onImageRemove()" />
+                [currentImageUrl]="getImgUrl(imgField.key)"
+                [uploading]="imgUploading[imgField.key]"
+                (onUpload)="onImageUpload($event, imgField.key)"
+                (onRemove)="onImageRemove(imgField.key)" />
 
-              @if (imageData()) {
+              @if (imgDataMap[imgField.key]) {
                 <div class="mt-4 pt-4 border-t border-surface-200 dark:border-surface-700">
                   <div class="grid grid-cols-2 gap-y-2.5 gap-x-4 text-sm">
                     <div>
                       <span class="text-xs text-surface-400 block">Filename</span>
-                      <span class="font-medium text-surface-900 dark:text-surface-0 text-xs break-all">{{ imageData()!.originalFilename || imageData()!.filename }}</span>
+                      <span class="font-medium text-surface-900 dark:text-surface-0 text-xs break-all">{{ imgDataMap[imgField.key].originalFilename || imgDataMap[imgField.key].filename }}</span>
                     </div>
                     <div>
                       <span class="text-xs text-surface-400 block">Type</span>
-                      <span class="font-medium text-surface-900 dark:text-surface-0 text-xs">{{ imageData()!.mimeType }}</span>
+                      <span class="font-medium text-surface-900 dark:text-surface-0 text-xs">{{ imgDataMap[imgField.key].mimeType }}</span>
                     </div>
                     <div>
                       <span class="text-xs text-surface-400 block">Size</span>
-                      <span class="font-medium text-surface-900 dark:text-surface-0 text-xs">{{ formatFileSize(imageData()!.size) }}</span>
+                      <span class="font-medium text-surface-900 dark:text-surface-0 text-xs">{{ formatFileSize(imgDataMap[imgField.key].size) }}</span>
                     </div>
-                    @if (imageData()!.width) {
+                    @if (imgDataMap[imgField.key].width) {
                       <div>
                         <span class="text-xs text-surface-400 block">Dimensions</span>
-                        <span class="font-medium text-surface-900 dark:text-surface-0 text-xs">{{ imageData()!.width }} × {{ imageData()!.height }}px</span>
+                        <span class="font-medium text-surface-900 dark:text-surface-0 text-xs">{{ imgDataMap[imgField.key].width }} × {{ imgDataMap[imgField.key].height }}px</span>
                       </div>
                     }
                   </div>
-                  @if (imageData()!.mimeType !== 'image/webp') {
+                  @if (imgDataMap[imgField.key].mimeType !== 'image/webp') {
                     <div class="mt-3">
-                      <p-button label="Optimize for Web" icon="pi pi-bolt" severity="secondary" [outlined]="true" size="small" styleClass="w-full" [loading]="optimizing()" (onClick)="optimizeImage()" />
+                      <p-button label="Optimize for Web" icon="pi pi-bolt" severity="secondary" [outlined]="true" size="small" styleClass="w-full" [loading]="imgOptimizing[imgField.key]" (onClick)="optimizeImage(imgField.key)" />
                       <p class="text-[10px] text-surface-400 mt-1.5 text-center">Convert to WebP for smaller file size</p>
                     </div>
                   } @else {
                     <div class="mt-3 flex items-center gap-2 justify-center">
                       <i class="pi pi-check-circle text-green-500 text-xs"></i>
                       <span class="text-xs text-green-600 dark:text-green-400 font-medium">Already optimized (WebP)</span>
-                    </div>
-                  }
-                  @if (optimizeResult()) {
-                    <div class="mt-3 p-3 bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-lg">
-                      <div class="flex items-center gap-1.5 text-green-700 dark:text-green-400 text-xs font-medium mb-1">
-                        <i class="pi pi-check-circle text-xs"></i> Optimized
-                      </div>
-                      <div class="text-xs text-surface-600 dark:text-surface-400">
-                        {{ formatFileSize(optimizeResult()!.originalSize) }} → {{ formatFileSize(optimizeResult()!.optimizedSize) }}
-                        <span class="font-medium text-green-600 dark:text-green-400">({{ optimizeResult()!.savingsPercent }}% smaller)</span>
-                      </div>
                     </div>
                   }
                 </div>
@@ -203,17 +197,18 @@ export class SingletonEditorComponent implements OnInit {
   @Input() sectionPosition: number = 0;
   @Input() backRoute: string = '/homepage';
   @Input() imageField: string = '';
+  @Input() imageFields: SingletonImageField[] = [];
 
   readonly homepageService = inject(HomepageService);
   private readonly messageService = inject(MessageService);
   private readonly router = inject(Router);
   private readonly http = inject(HttpClient);
 
-  imageUrl = signal('');
-  imageData = signal<any>(null);
-  uploadingImage = signal(false);
-  optimizing = signal(false);
-  optimizeResult = signal<{ originalSize: number; optimizedSize: number; savingsPercent: number } | null>(null);
+  // Multi-image support
+  imgUrlMap: Record<string, string> = {};
+  imgDataMap: Record<string, any> = {};
+  imgUploading: Record<string, boolean> = {};
+  imgOptimizing: Record<string, boolean> = {};
 
   translations = signal<{ hr: Record<string, any>; en: Record<string, any> }>({
     hr: {},
@@ -221,6 +216,18 @@ export class SingletonEditorComponent implements OnInit {
   });
 
   nonTranslatableValues: Record<string, any> = {};
+
+  allImageFields(): SingletonImageField[] {
+    const fields = [...this.imageFields];
+    if (this.imageField && !fields.find(f => f.key === this.imageField)) {
+      fields.unshift({ key: this.imageField, label: 'Image' });
+    }
+    return fields;
+  }
+
+  getImgUrl(key: string): string {
+    return this.imgUrlMap[key] || '';
+  }
 
   navigateBack(): void {
     this.router.navigate([this.backRoute]);
@@ -260,12 +267,12 @@ export class SingletonEditorComponent implements OnInit {
           }
         }
 
-        // Resolve image
-        if (this.imageField && data[this.imageField]) {
-          const img = data[this.imageField];
-          if (typeof img === 'object' && img.path) {
-            this.imageUrl.set(environment.apiUrl.replace('/api', '') + '/storage/media/' + img.path);
-            this.imageData.set(img);
+        // Resolve images
+        for (const imgField of this.allImageFields()) {
+          const img = data[imgField.key];
+          if (img && typeof img === 'object' && img.path) {
+            this.imgUrlMap[imgField.key] = environment.apiUrl.replace('/api', '') + '/storage/media/' + img.path;
+            this.imgDataMap[imgField.key] = img;
           }
         }
       },
@@ -275,38 +282,38 @@ export class SingletonEditorComponent implements OnInit {
     });
   }
 
-  onImageUpload(file: File): void {
-    this.uploadingImage.set(true);
+  onImageUpload(file: File, fieldKey: string): void {
+    this.imgUploading[fieldKey] = true;
     const formData = new FormData();
     formData.append('file', file);
-    this.http.post<any>(`${environment.apiUrl}/singletons/${this.singletonType}/media/${this.imageField}`, formData).subscribe({
+    this.http.post<any>(`${environment.apiUrl}/singletons/${this.singletonType}/media/${fieldKey}`, formData).subscribe({
       next: (res) => {
-        this.uploadingImage.set(false);
-        this.imageUrl.set(environment.apiUrl.replace('/api', '') + res.url);
+        this.imgUploading[fieldKey] = false;
+        this.imgUrlMap[fieldKey] = environment.apiUrl.replace('/api', '') + res.url;
+        // Reload to get full image data
+        this.loadData();
         this.messageService.add({ severity: 'success', summary: 'Image uploaded' });
       },
       error: () => {
-        this.uploadingImage.set(false);
+        this.imgUploading[fieldKey] = false;
         this.messageService.add({ severity: 'error', summary: 'Failed to upload image' });
       },
     });
   }
 
-  optimizeImage(): void {
-    const img = this.imageData();
+  optimizeImage(fieldKey: string): void {
+    const img = this.imgDataMap[fieldKey];
     if (!img?.id) return;
-    this.optimizing.set(true);
-    this.optimizeResult.set(null);
+    this.imgOptimizing[fieldKey] = true;
     this.http.post<any>(`${environment.apiUrl}/media/${img.id}/optimize`, { quality: 80 }).subscribe({
       next: (res) => {
-        this.optimizing.set(false);
-        this.optimizeResult.set(res);
-        this.imageData.set({ ...img, mimeType: res.mimeType, size: res.optimizedSize, path: res.path, width: res.width, height: res.height });
-        this.imageUrl.set(environment.apiUrl.replace('/api', '') + '/storage/media/' + res.path);
+        this.imgOptimizing[fieldKey] = false;
+        this.imgDataMap[fieldKey] = { ...img, mimeType: res.mimeType, size: res.optimizedSize, path: res.path, width: res.width, height: res.height };
+        this.imgUrlMap[fieldKey] = environment.apiUrl.replace('/api', '') + '/storage/media/' + res.path;
         this.messageService.add({ severity: 'success', summary: 'Image optimized', detail: `${res.savingsPercent}% smaller` });
       },
       error: (err) => {
-        this.optimizing.set(false);
+        this.imgOptimizing[fieldKey] = false;
         this.messageService.add({ severity: 'error', summary: 'Optimization failed', detail: err.error?.error || 'Unknown error' });
       },
     });
@@ -320,10 +327,11 @@ export class SingletonEditorComponent implements OnInit {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   }
 
-  onImageRemove(): void {
-    this.http.delete(`${environment.apiUrl}/singletons/${this.singletonType}/media/${this.imageField}`).subscribe({
+  onImageRemove(fieldKey: string): void {
+    this.http.delete(`${environment.apiUrl}/singletons/${this.singletonType}/media/${fieldKey}`).subscribe({
       next: () => {
-        this.imageUrl.set('');
+        this.imgUrlMap[fieldKey] = '';
+        delete this.imgDataMap[fieldKey];
         this.messageService.add({ severity: 'info', summary: 'Image removed' });
       },
       error: () => this.messageService.add({ severity: 'error', summary: 'Failed to remove image' }),
