@@ -25,91 +25,68 @@ import { SettingsService, Setting, BackupInfo, SystemInfo } from '../../core/ser
   providers: [ConfirmationService],
   template: `
     <div>
-      <div class="mb-6">
-        <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">{{ sectionTitle }}</h1>
-        <p class="text-surface-500 text-sm mt-0.5">{{ sectionDescription }}</p>
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">{{ sectionTitle }}</h1>
+          <p class="text-surface-500 text-sm mt-0.5">{{ sectionDescription }}</p>
+        </div>
+        @if (activeSection !== 'advanced' && activeSection !== 'maintenance') {
+          <p-button label="Save" icon="pi pi-save" [loading]="saving()" (onClick)="saveGroup(activeSection === 'translations' ? 'all-translations' : activeSection)" />
+        }
       </div>
 
       <!-- ═══ GENERAL ═══ -->
       @if (activeSection === 'general') {
-        <div class="max-w-2xl space-y-6">
-          <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
-            <h3 class="text-base font-semibold text-surface-900 dark:text-surface-0 mb-4">Site Information</h3>
-            <div class="flex flex-col gap-4">
-              @for (field of generalFields; track field.key) {
-                <div class="flex flex-col gap-2">
-                  <label class="text-sm font-medium text-surface-700 dark:text-surface-300">{{ field.label }}</label>
-                  <input pInputText class="w-full" [ngModel]="getSettingValue(field.key)" (ngModelChange)="setSettingValue(field.key, $event, 'general')" [placeholder]="field.placeholder || ''" />
+        <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700">
+          <div class="divide-y divide-surface-200 dark:divide-surface-700">
+            @for (field of generalFields; track field.key) {
+              <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 p-5 items-start">
+                <div>
+                  <label class="text-sm font-medium text-surface-900 dark:text-surface-0">{{ field.label }}</label>
                   @if (field.hint) {
-                    <span class="text-xs text-surface-400">{{ field.hint }}</span>
+                    <p class="text-xs text-surface-400 mt-0.5">{{ field.hint }}</p>
                   }
                 </div>
-              }
-            </div>
-            <div class="flex justify-end mt-6">
-              <p-button label="Save" icon="pi pi-save" [loading]="saving()" (onClick)="saveGroup('general')" />
-            </div>
+                <div class="lg:col-span-2">
+                  <input pInputText class="w-full" [ngModel]="getSettingValue(field.key)" (ngModelChange)="setSettingValue(field.key, $event, 'general')" [placeholder]="field.placeholder || ''" />
+                </div>
+              </div>
+            }
           </div>
         </div>
       }
 
       <!-- ═══ INTEGRATIONS ═══ -->
       @if (activeSection === 'integrations') {
-        <div class="max-w-2xl space-y-6">
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
           <!-- AI -->
           <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
-            <div class="flex items-center gap-2 mb-4">
+            <div class="flex items-center gap-2 mb-1">
               <i class="pi pi-sparkles text-purple-500"></i>
               <h3 class="text-base font-semibold text-surface-900 dark:text-surface-0">AI Integration</h3>
             </div>
-            <div class="flex flex-col gap-4">
-              <div class="flex flex-col gap-2">
-                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Anthropic API Key</label>
-                <p-password
-                  [ngModel]="getSettingValue('integrations.anthropicApiKey')"
-                  (ngModelChange)="setSettingValue('integrations.anthropicApiKey', $event, 'integrations')"
-                  [feedback]="false"
-                  [toggleMask]="true"
-                  styleClass="w-full"
-                  inputStyleClass="w-full"
-                  placeholder="sk-ant-..." />
-                <span class="text-xs text-surface-400">Used for AI-powered SEO generation. Get a key at console.anthropic.com</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Analytics -->
-          <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
-            <div class="flex items-center gap-2 mb-4">
-              <i class="pi pi-chart-bar text-blue-500"></i>
-              <h3 class="text-base font-semibold text-surface-900 dark:text-surface-0">Analytics & Tracking</h3>
-            </div>
-            <div class="flex flex-col gap-4">
-              <div class="flex flex-col gap-2">
-                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Google Tag Manager ID</label>
-                <input pInputText class="w-full" [ngModel]="getSettingValue('integrations.gtmId')" (ngModelChange)="setSettingValue('integrations.gtmId', $event, 'integrations')" placeholder="GTM-XXXXXXX" />
-              </div>
-              <div class="flex flex-col gap-2">
-                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Google Analytics ID</label>
-                <input pInputText class="w-full" [ngModel]="getSettingValue('integrations.gaId')" (ngModelChange)="setSettingValue('integrations.gaId', $event, 'integrations')" placeholder="G-XXXXXXXXXX" />
-              </div>
-              <div class="flex flex-col gap-2">
-                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Facebook Pixel ID</label>
-                <input pInputText class="w-full" [ngModel]="getSettingValue('integrations.fbPixelId')" (ngModelChange)="setSettingValue('integrations.fbPixelId', $event, 'integrations')" placeholder="XXXXXXXXXXXXXXX" />
-              </div>
-              <div class="flex flex-col gap-2">
-                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Hotjar Site ID</label>
-                <input pInputText class="w-full" [ngModel]="getSettingValue('integrations.hotjarId')" (ngModelChange)="setSettingValue('integrations.hotjarId', $event, 'integrations')" placeholder="XXXXXXX" />
-              </div>
+            <p class="text-xs text-surface-400 mb-4">Powers AI-generated SEO metadata</p>
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Anthropic API Key</label>
+              <p-password
+                [ngModel]="getSettingValue('integrations.anthropicApiKey')"
+                (ngModelChange)="setSettingValue('integrations.anthropicApiKey', $event, 'integrations')"
+                [feedback]="false"
+                [toggleMask]="true"
+                styleClass="w-full"
+                inputStyleClass="w-full"
+                placeholder="sk-ant-..." />
+              <span class="text-xs text-surface-400">Get a key at console.anthropic.com</span>
             </div>
           </div>
 
           <!-- reCAPTCHA -->
           <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
-            <div class="flex items-center gap-2 mb-4">
+            <div class="flex items-center gap-2 mb-1">
               <i class="pi pi-shield text-green-500"></i>
               <h3 class="text-base font-semibold text-surface-900 dark:text-surface-0">reCAPTCHA</h3>
             </div>
+            <p class="text-xs text-surface-400 mb-4">Protects forms from spam</p>
             <div class="flex flex-col gap-4">
               <div class="flex flex-col gap-2">
                 <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Site Key</label>
@@ -128,34 +105,51 @@ import { SettingsService, Setting, BackupInfo, SystemInfo } from '../../core/ser
             </div>
           </div>
 
-          <div class="flex justify-end">
-            <p-button label="Save Integrations" icon="pi pi-save" [loading]="saving()" (onClick)="saveGroup('integrations')" />
+          <!-- Analytics — full width -->
+          <div class="xl:col-span-2 bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+            <div class="flex items-center gap-2 mb-1">
+              <i class="pi pi-chart-bar text-blue-500"></i>
+              <h3 class="text-base font-semibold text-surface-900 dark:text-surface-0">Analytics & Tracking</h3>
+            </div>
+            <p class="text-xs text-surface-400 mb-4">Connect third-party analytics and tracking scripts</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Google Tag Manager ID</label>
+                <input pInputText class="w-full" [ngModel]="getSettingValue('integrations.gtmId')" (ngModelChange)="setSettingValue('integrations.gtmId', $event, 'integrations')" placeholder="GTM-XXXXXXX" />
+              </div>
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Google Analytics ID</label>
+                <input pInputText class="w-full" [ngModel]="getSettingValue('integrations.gaId')" (ngModelChange)="setSettingValue('integrations.gaId', $event, 'integrations')" placeholder="G-XXXXXXXXXX" />
+              </div>
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Facebook Pixel ID</label>
+                <input pInputText class="w-full" [ngModel]="getSettingValue('integrations.fbPixelId')" (ngModelChange)="setSettingValue('integrations.fbPixelId', $event, 'integrations')" placeholder="XXXXXXXXXXXXXXX" />
+              </div>
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Hotjar Site ID</label>
+                <input pInputText class="w-full" [ngModel]="getSettingValue('integrations.hotjarId')" (ngModelChange)="setSettingValue('integrations.hotjarId', $event, 'integrations')" placeholder="XXXXXXX" />
+              </div>
+            </div>
           </div>
         </div>
       }
 
       <!-- ═══ SEO ═══ -->
       @if (activeSection === 'seo') {
-        <div class="max-w-2xl space-y-6">
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <!-- Left: Core settings -->
           <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
-            <h3 class="text-base font-semibold text-surface-900 dark:text-surface-0 mb-4">Global SEO Defaults</h3>
+            <h3 class="text-base font-semibold text-surface-900 dark:text-surface-0 mb-4">Title & Meta</h3>
             <div class="flex flex-col gap-4">
               <div class="flex flex-col gap-2">
-                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Site Name (for title tag)</label>
+                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Site Name</label>
                 <input pInputText class="w-full" [ngModel]="getSettingValue('seo.siteName')" (ngModelChange)="setSettingValue('seo.siteName', $event, 'seo')" />
+                <span class="text-xs text-surface-400">Appended to page titles</span>
               </div>
               <div class="flex flex-col gap-2">
                 <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Title Separator</label>
-                <input pInputText class="w-full" style="max-width: 100px" [ngModel]="getSettingValue('seo.titleSeparator')" (ngModelChange)="setSettingValue('seo.titleSeparator', $event, 'seo')" />
-                <span class="text-xs text-surface-400">Character between page title and site name, e.g. "Page Title | Site Name"</span>
-              </div>
-              <div class="flex flex-col gap-2">
-                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Default Description (HR)</label>
-                <textarea pTextarea class="w-full" [rows]="2" [ngModel]="getTranslationValue('seo.defaultDescription', 'hr')" (ngModelChange)="setTranslationValue('seo.defaultDescription', 'hr', $event, 'seo')"></textarea>
-              </div>
-              <div class="flex flex-col gap-2">
-                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Default Description (EN)</label>
-                <textarea pTextarea class="w-full" [rows]="2" [ngModel]="getTranslationValue('seo.defaultDescription', 'en')" (ngModelChange)="setTranslationValue('seo.defaultDescription', 'en', $event, 'seo')"></textarea>
+                <input pInputText class="w-full" style="max-width: 80px" [ngModel]="getSettingValue('seo.titleSeparator')" (ngModelChange)="setSettingValue('seo.titleSeparator', $event, 'seo')" />
+                <span class="text-xs text-surface-400">e.g. "Page Title | Site Name"</span>
               </div>
               <div class="flex flex-col gap-2">
                 <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Twitter Handle</label>
@@ -165,43 +159,56 @@ import { SettingsService, Setting, BackupInfo, SystemInfo } from '../../core/ser
                 <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Default OG Image URL</label>
                 <input pInputText class="w-full" [ngModel]="getSettingValue('seo.defaultOgImage')" (ngModelChange)="setSettingValue('seo.defaultOgImage', $event, 'seo')" placeholder="/storage/media/og-default.jpg" />
               </div>
+            </div>
+          </div>
+
+          <!-- Right: Descriptions -->
+          <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+            <h3 class="text-base font-semibold text-surface-900 dark:text-surface-0 mb-4">Default Descriptions</h3>
+            <div class="flex flex-col gap-4">
               <div class="flex flex-col gap-2">
-                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">robots.txt</label>
-                <textarea pTextarea class="w-full font-mono text-xs" [rows]="5" [ngModel]="getSettingValue('seo.robotsTxt')" (ngModelChange)="setSettingValue('seo.robotsTxt', $event, 'seo')"></textarea>
+                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Croatian (HR)</label>
+                <textarea pTextarea class="w-full" [rows]="3" [ngModel]="getTranslationValue('seo.defaultDescription', 'hr')" (ngModelChange)="setTranslationValue('seo.defaultDescription', 'hr', $event, 'seo')"></textarea>
+              </div>
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">English (EN)</label>
+                <textarea pTextarea class="w-full" [rows]="3" [ngModel]="getTranslationValue('seo.defaultDescription', 'en')" (ngModelChange)="setTranslationValue('seo.defaultDescription', 'en', $event, 'seo')"></textarea>
               </div>
             </div>
-            <div class="flex justify-end mt-6">
-              <p-button label="Save SEO" icon="pi pi-save" [loading]="saving()" (onClick)="saveGroup('seo')" />
-            </div>
+          </div>
+
+          <!-- Full width: robots.txt -->
+          <div class="xl:col-span-2 bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+            <h3 class="text-base font-semibold text-surface-900 dark:text-surface-0 mb-4">robots.txt</h3>
+            <textarea pTextarea class="w-full font-mono text-xs" [rows]="6" [ngModel]="getSettingValue('seo.robotsTxt')" (ngModelChange)="setSettingValue('seo.robotsTxt', $event, 'seo')"></textarea>
           </div>
         </div>
       }
 
       <!-- ═══ TRANSLATIONS ═══ -->
       @if (activeSection === 'translations') {
-        <div class="max-w-3xl space-y-6">
+        <div class="space-y-6">
           @for (section of translationSections; track section.group) {
-            <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
-              <h3 class="text-base font-semibold text-surface-900 dark:text-surface-0 mb-4 capitalize">{{ section.label }}</h3>
-              <div class="flex flex-col gap-5">
+            <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700">
+              <div class="p-5 border-b border-surface-200 dark:border-surface-700">
+                <h3 class="text-base font-semibold text-surface-900 dark:text-surface-0 capitalize">{{ section.label }}</h3>
+              </div>
+              <div class="divide-y divide-surface-200 dark:divide-surface-700">
                 @for (item of getTranslationSettings(section.group); track item.key) {
-                  <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-surface-700 dark:text-surface-300 font-mono">{{ item.key }}</label>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div class="flex flex-col gap-1">
-                        <span class="text-xs text-surface-400 font-medium">HR</span>
-                        <input pInputText class="w-full" [ngModel]="getTranslationValue(item.key, 'hr')" (ngModelChange)="setTranslationValue(item.key, 'hr', $event, section.group)" />
-                      </div>
-                      <div class="flex flex-col gap-1">
-                        <span class="text-xs text-surface-400 font-medium">EN</span>
-                        <input pInputText class="w-full" [ngModel]="getTranslationValue(item.key, 'en')" (ngModelChange)="setTranslationValue(item.key, 'en', $event, section.group)" />
-                      </div>
+                  <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 p-5 items-start">
+                    <div class="lg:col-span-1">
+                      <label class="text-sm font-medium text-surface-700 dark:text-surface-300 font-mono break-all">{{ item.key }}</label>
+                    </div>
+                    <div class="lg:col-span-2 flex flex-col gap-1">
+                      <span class="text-xs text-surface-400 font-medium">HR</span>
+                      <input pInputText class="w-full" [ngModel]="getTranslationValue(item.key, 'hr')" (ngModelChange)="setTranslationValue(item.key, 'hr', $event, section.group)" />
+                    </div>
+                    <div class="lg:col-span-2 flex flex-col gap-1">
+                      <span class="text-xs text-surface-400 font-medium">EN</span>
+                      <input pInputText class="w-full" [ngModel]="getTranslationValue(item.key, 'en')" (ngModelChange)="setTranslationValue(item.key, 'en', $event, section.group)" />
                     </div>
                   </div>
                 }
-              </div>
-              <div class="flex justify-end mt-6">
-                <p-button label="Save {{ section.label }}" icon="pi pi-save" [loading]="saving()" (onClick)="saveGroup(section.group)" />
               </div>
             </div>
           }
@@ -210,66 +217,62 @@ import { SettingsService, Setting, BackupInfo, SystemInfo } from '../../core/ser
 
       <!-- ═══ MAINTENANCE ═══ -->
       @if (activeSection === 'maintenance') {
-        <div class="max-w-2xl space-y-6">
+        <div class="space-y-6">
           <!-- System Info -->
           @if (systemInfo()) {
-            <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
-              <h3 class="text-base font-semibold text-surface-900 dark:text-surface-0 mb-4">System Info</h3>
-              <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="flex flex-col gap-1">
-                  <span class="text-xs text-surface-400">PHP</span>
-                  <span class="text-sm font-medium text-surface-900 dark:text-surface-0">{{ systemInfo()!.php }}</span>
-                </div>
-                <div class="flex flex-col gap-1">
-                  <span class="text-xs text-surface-400">Symfony</span>
-                  <span class="text-sm font-medium text-surface-900 dark:text-surface-0">{{ systemInfo()!.symfony }}</span>
-                </div>
-                <div class="flex flex-col gap-1">
-                  <span class="text-xs text-surface-400">Environment</span>
-                  <span class="text-sm font-medium text-surface-900 dark:text-surface-0">{{ systemInfo()!.environment }}</span>
-                </div>
-                <div class="flex flex-col gap-1">
-                  <span class="text-xs text-surface-400">Debug</span>
-                  <p-tag [value]="systemInfo()!.debug ? 'On' : 'Off'" [severity]="systemInfo()!.debug ? 'warn' : 'success'" />
-                </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-5">
+                <span class="text-xs text-surface-400 block mb-1">PHP Version</span>
+                <span class="text-lg font-semibold text-surface-900 dark:text-surface-0">{{ systemInfo()!.php }}</span>
+              </div>
+              <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-5">
+                <span class="text-xs text-surface-400 block mb-1">Symfony</span>
+                <span class="text-lg font-semibold text-surface-900 dark:text-surface-0">{{ systemInfo()!.symfony }}</span>
+              </div>
+              <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-5">
+                <span class="text-xs text-surface-400 block mb-1">Environment</span>
+                <span class="text-lg font-semibold text-surface-900 dark:text-surface-0 capitalize">{{ systemInfo()!.environment }}</span>
+              </div>
+              <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-5">
+                <span class="text-xs text-surface-400 block mb-1">Debug Mode</span>
+                <p-tag [value]="systemInfo()!.debug ? 'Enabled' : 'Disabled'" [severity]="systemInfo()!.debug ? 'warn' : 'success'" />
               </div>
             </div>
           }
 
-          <!-- Cache -->
-          <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
-            <div class="flex items-center gap-2 mb-4">
-              <i class="pi pi-bolt text-yellow-500"></i>
-              <h3 class="text-base font-semibold text-surface-900 dark:text-surface-0">Cache</h3>
-            </div>
-            <p class="text-sm text-surface-500 mb-4">Clear or warm up the application cache. Use after deploying changes or if you experience issues.</p>
-            <div class="flex items-center gap-3">
-              <p-button label="Clear Cache" icon="pi pi-trash" severity="warn" [outlined]="true" [loading]="clearingCache()" (onClick)="clearCache()" />
-              <p-button label="Warmup Cache" icon="pi pi-sync" severity="secondary" [outlined]="true" [loading]="warmingCache()" (onClick)="warmupCache()" />
-            </div>
-            @if (cacheResult()) {
-              <div class="mt-4 p-3 rounded-lg text-xs font-mono max-h-32 overflow-auto"
-                [class]="cacheResult()!.success
-                  ? 'bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400'
-                  : 'bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'">
-                {{ cacheResult()!.output }}
+          <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <!-- Cache -->
+            <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+              <div class="flex items-center gap-2 mb-1">
+                <i class="pi pi-bolt text-yellow-500"></i>
+                <h3 class="text-base font-semibold text-surface-900 dark:text-surface-0">Cache</h3>
               </div>
-            }
-          </div>
-
-          <!-- Database Backup -->
-          <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
-            <div class="flex items-center gap-2 mb-4">
-              <i class="pi pi-database text-blue-500"></i>
-              <h3 class="text-base font-semibold text-surface-900 dark:text-surface-0">Database Backup</h3>
+              <p class="text-xs text-surface-400 mb-5">Clear after deploying or if you experience stale data</p>
+              <div class="flex items-center gap-3">
+                <p-button label="Clear Cache" icon="pi pi-trash" severity="warn" [outlined]="true" [loading]="clearingCache()" (onClick)="clearCache()" />
+                <p-button label="Warmup Cache" icon="pi pi-sync" severity="secondary" [outlined]="true" [loading]="warmingCache()" (onClick)="warmupCache()" />
+              </div>
+              @if (cacheResult()) {
+                <div class="mt-4 p-3 rounded-lg text-xs font-mono max-h-32 overflow-auto"
+                  [class]="cacheResult()!.success
+                    ? 'bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400'
+                    : 'bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'">
+                  {{ cacheResult()!.output }}
+                </div>
+              }
             </div>
-            <p class="text-sm text-surface-500 mb-4">Create a mysqldump backup of the database. Backups are stored on the server.</p>
-            <p-button label="Create Backup" icon="pi pi-download" [outlined]="true" [loading]="creatingBackup()" (onClick)="createBackup()" />
 
-            @if (backups().length > 0) {
-              <div class="mt-4">
-                <h4 class="text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Recent Backups</h4>
-                <div class="flex flex-col gap-2">
+            <!-- Database Backup -->
+            <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+              <div class="flex items-center gap-2 mb-1">
+                <i class="pi pi-database text-blue-500"></i>
+                <h3 class="text-base font-semibold text-surface-900 dark:text-surface-0">Database Backup</h3>
+              </div>
+              <p class="text-xs text-surface-400 mb-5">mysqldump backups stored on the server</p>
+              <p-button label="Create Backup" icon="pi pi-download" [outlined]="true" [loading]="creatingBackup()" (onClick)="createBackup()" />
+
+              @if (backups().length > 0) {
+                <div class="mt-4 flex flex-col gap-2">
                   @for (b of backups(); track b.filename) {
                     <div class="flex items-center justify-between p-3 bg-surface-50 dark:bg-surface-800 rounded-lg">
                       <div class="flex items-center gap-3">
@@ -283,8 +286,8 @@ import { SettingsService, Setting, BackupInfo, SystemInfo } from '../../core/ser
                     </div>
                   }
                 </div>
-              </div>
-            }
+              }
+            </div>
           </div>
         </div>
       }
@@ -497,7 +500,9 @@ export class SettingsPageComponent implements OnInit, OnDestroy {
   // ─── SAVE BY GROUP ─────────────────────────────────────
 
   saveGroup(group: string): void {
-    const keysToSave = [...this.pendingChanges.entries()].filter(([, v]) => v.group === group);
+    const keysToSave = group === 'all-translations'
+      ? [...this.pendingChanges.entries()].filter(([, v]) => this.translationSections.some(s => s.group === v.group))
+      : [...this.pendingChanges.entries()].filter(([, v]) => v.group === group);
     if (keysToSave.length === 0) {
       this.messageService.add({ severity: 'info', summary: 'No changes', detail: 'Nothing to save' });
       return;
