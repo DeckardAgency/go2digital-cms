@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -90,7 +90,7 @@ import { LocationService, TotemDetail } from '../../../core/services/location.se
               </div>
               <div class="flex flex-col gap-2">
                 <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Video URL</label>
-                <input pInputText class="w-full" [(ngModel)]="videoUrl" placeholder="https://www.youtube.com/watch?v=..." />
+                <input pInputText class="w-full" [(ngModel)]="videoUrl" (ngModelChange)="updateYoutubeEmbed()" placeholder="https://www.youtube.com/watch?v=..." />
               </div>
               @if (youtubeEmbedUrl()) {
                 <div class="mt-1">
@@ -193,24 +193,25 @@ export class TotemFormComponent implements OnInit {
   private readonly messageService = inject(MessageService);
   private readonly sanitizer = inject(DomSanitizer);
 
-  youtubeEmbedUrl = computed((): SafeResourceUrl | null => {
+  youtubeEmbedUrl = signal<SafeResourceUrl | null>(null);
+
+  updateYoutubeEmbed(): void {
     const url = this.videoUrl;
-    if (!url) return null;
+    if (!url) { this.youtubeEmbedUrl.set(null); return; }
 
     let videoId = '';
-    // youtube.com/watch?v=ID
-    const match1 = url.match(/[?&]v=([^&]+)/);
-    if (match1) videoId = match1[1];
-    // youtu.be/ID
-    const match2 = url.match(/youtu\.be\/([^?&]+)/);
-    if (match2) videoId = match2[1];
-    // youtube.com/embed/ID
-    const match3 = url.match(/embed\/([^?&]+)/);
-    if (match3) videoId = match3[1];
+    const m1 = url.match(/[?&]v=([^&]+)/);
+    if (m1) videoId = m1[1];
+    const m2 = url.match(/youtu\.be\/([^?&]+)/);
+    if (m2) videoId = m2[1];
+    const m3 = url.match(/embed\/([^?&]+)/);
+    if (m3) videoId = m3[1];
 
-    if (!videoId) return null;
-    return this.sanitizer.bypassSecurityTrustResourceUrl(`https://www.youtube.com/embed/${videoId}`);
-  });
+    if (!videoId) { this.youtubeEmbedUrl.set(null); return; }
+    this.youtubeEmbedUrl.set(
+      this.sanitizer.bypassSecurityTrustResourceUrl(`https://www.youtube.com/embed/${videoId}`)
+    );
+  }
 
   totemId = signal<string | null>(null);
 
@@ -259,6 +260,7 @@ export class TotemFormComponent implements OnInit {
         this.postbuyCategory = totem.postbuyCategory || '';
         this.totemMotion = totem.totemMotion || '';
         this.videoUrl = totem.videoUrl || '';
+        this.updateYoutubeEmbed();
 
         this.isPublished = totem.isPublished;
         this.isInstalled = totem.isInstalled;
