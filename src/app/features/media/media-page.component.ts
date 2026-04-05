@@ -23,68 +23,178 @@ import { MediaService, MediaItem } from '../../core/services/media.service';
   ],
   providers: [ConfirmationService],
   template: `
-    <div>
-      <!-- Header -->
-      <div class="flex items-center justify-between mb-6">
+    <div class="space-y-6">
+      <!-- Header (outside card, like DataTableWrapper) -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">Media Library</h1>
-          <p class="text-surface-500 text-sm mt-0.5">{{ media().length }} files · {{ totalSize() }}</p>
+          <p class="text-surface-500 dark:text-surface-400 mt-1">{{ media().length }} files · {{ totalSize() }}</p>
         </div>
-        <p-button label="Upload" icon="pi pi-upload" [loading]="uploading()" (onClick)="fileInput.click()" />
+        <div class="flex items-center gap-2">
+          <p-button label="Upload" icon="pi pi-upload" [loading]="uploading()" (onClick)="fileInput.click()" />
+        </div>
         <input #fileInput type="file" class="hidden" accept="image/*,video/*,application/pdf" multiple (change)="onFilesSelected($event)" />
       </div>
 
-      <!-- Stats + Filters Bar -->
-      <div class="flex items-center justify-between mb-5 flex-wrap gap-4">
-        <!-- Type pills -->
-        <div class="flex items-center gap-1 bg-surface-100 dark:bg-surface-800 rounded-lg p-1">
-          @for (opt of typeOptions; track opt.value) {
-            <button type="button"
-              class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
-              [class]="filterType === opt.value
-                ? 'bg-surface-0 dark:bg-surface-700 text-surface-900 dark:text-surface-0 shadow-sm'
-                : 'text-surface-500 hover:text-surface-700 dark:hover:text-surface-300'"
-              (click)="filterType = opt.value; applyFilters()">
-              {{ opt.label }} ({{ opt.count }})
-            </button>
-          }
-        </div>
+      <!-- Card container -->
+      <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700">
 
-        <div class="flex items-center gap-3">
-          <!-- Search -->
-          <div class="relative">
-            <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 text-sm"></i>
-            <input pInputText class="pl-9 w-56" placeholder="Search files..." [(ngModel)]="searchQuery" (ngModelChange)="applyFilters()" />
+        <!-- Toolbar (matching DataTableWrapper toolbar) -->
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 p-3 border-b border-surface-200 dark:border-surface-700">
+
+          <!-- Left: Type pills + filter chips -->
+          <div class="flex items-center gap-2 flex-wrap">
+            <div class="flex items-center gap-1 bg-surface-100 dark:bg-surface-800 rounded-lg p-0.5">
+              @for (opt of typeOptions; track opt.value) {
+                <button type="button"
+                  class="px-2.5 py-1 rounded-md text-xs font-medium transition-colors"
+                  [class]="filterType === opt.value
+                    ? 'bg-surface-0 dark:bg-surface-700 text-surface-900 dark:text-surface-0 shadow-sm'
+                    : 'text-surface-500 hover:text-surface-700 dark:hover:text-surface-300'"
+                  (click)="filterType = opt.value; applyFilters()">
+                  {{ opt.label }} ({{ opt.count }})
+                </button>
+              }
+            </div>
+
+            @if (selectedCollection) {
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-surface-100 dark:bg-surface-800 text-surface-700 dark:text-surface-300 border border-surface-200 dark:border-surface-700">
+                {{ selectedCollection }}
+                <i class="pi pi-times text-[10px] cursor-pointer hover:text-red-500" (click)="selectedCollection = null; loadMedia()"></i>
+              </span>
+            }
           </div>
 
-          <!-- Collection -->
-          <p-select
-            [options]="collectionOptions"
-            [(ngModel)]="selectedCollection"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="All collections"
-            [showClear]="true"
-            class="w-40"
-            (onChange)="loadMedia()" />
+          <!-- Right: Search, Collection, View, Refresh -->
+          <div class="flex items-center gap-2">
+            <input pInputText [(ngModel)]="searchQuery" (ngModelChange)="applyFilters()" placeholder="Search..." class="w-48 lg:w-56 text-sm" />
 
-          <!-- View toggle -->
-          <div class="flex items-center gap-1 bg-surface-100 dark:bg-surface-800 rounded-lg p-1">
-            <button type="button" class="w-8 h-8 rounded-md flex items-center justify-center transition-colors"
-              [class]="viewMode === 'grid' ? 'bg-surface-0 dark:bg-surface-700 shadow-sm text-surface-900 dark:text-surface-0' : 'text-surface-400'"
-              (click)="viewMode = 'grid'">
-              <i class="pi pi-th-large text-sm"></i>
-            </button>
-            <button type="button" class="w-8 h-8 rounded-md flex items-center justify-center transition-colors"
-              [class]="viewMode === 'list' ? 'bg-surface-0 dark:bg-surface-700 shadow-sm text-surface-900 dark:text-surface-0' : 'text-surface-400'"
-              (click)="viewMode = 'list'">
-              <i class="pi pi-list text-sm"></i>
-            </button>
+            <p-select
+              [options]="collectionOptions"
+              [(ngModel)]="selectedCollection"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Collection"
+              [showClear]="true"
+              class="w-40"
+              (onChange)="loadMedia()" />
+
+            <!-- View toggle -->
+            <div class="flex items-center gap-0.5 bg-surface-100 dark:bg-surface-800 rounded-lg p-0.5">
+              <button type="button" class="w-8 h-8 rounded-md flex items-center justify-center transition-colors"
+                [class]="viewMode === 'grid' ? 'bg-surface-0 dark:bg-surface-700 shadow-sm text-surface-900 dark:text-surface-0' : 'text-surface-400'"
+                (click)="viewMode = 'grid'" pTooltip="Grid view" tooltipPosition="bottom">
+                <i class="pi pi-th-large text-sm"></i>
+              </button>
+              <button type="button" class="w-8 h-8 rounded-md flex items-center justify-center transition-colors"
+                [class]="viewMode === 'list' ? 'bg-surface-0 dark:bg-surface-700 shadow-sm text-surface-900 dark:text-surface-0' : 'text-surface-400'"
+                (click)="viewMode = 'list'" pTooltip="List view" tooltipPosition="bottom">
+                <i class="pi pi-list text-sm"></i>
+              </button>
+            </div>
+
+            <div class="w-px h-6 bg-surface-200 dark:bg-surface-700"></div>
+
+            <p-button icon="pi pi-refresh" [text]="true" [rounded]="true" severity="secondary" pTooltip="Refresh" tooltipPosition="bottom" (onClick)="loadMedia()" />
           </div>
         </div>
+
+        <!-- Upload progress -->
+        @if (uploading()) {
+          <div class="flex items-center gap-3 p-3 border-b border-surface-200 dark:border-surface-700 bg-primary-50 dark:bg-primary-900/10">
+            <i class="pi pi-spin pi-spinner text-primary"></i>
+            <span class="text-sm text-surface-700 dark:text-surface-300">Uploading {{ uploadQueue() }} file(s)...</span>
+          </div>
+        }
+
+        <!-- Content area -->
+        @if (mediaService.isLoading() && media().length === 0) {
+          <!-- Loading skeleton -->
+          <div class="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
+            @for (i of [1,2,3,4,5,6,7,8,9,10,11,12]; track i) {
+              <div class="bg-surface-100 dark:bg-surface-800 rounded-lg aspect-square animate-pulse"></div>
+            }
+          </div>
+        } @else if (filteredMedia().length === 0) {
+          <!-- Empty state -->
+          <div class="flex flex-col items-center justify-center py-20 text-surface-400">
+            <i class="pi pi-images text-5xl mb-4"></i>
+            @if (media().length === 0) {
+              <p class="text-lg">No media files yet</p>
+              <p class="text-sm mt-1">Drag & drop files here or click Upload</p>
+            } @else {
+              <p class="text-lg">No files match your filters</p>
+            }
+          </div>
+        } @else if (viewMode === 'grid') {
+          <!-- Grid View -->
+          <div class="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
+            @for (item of filteredMedia(); track item.id) {
+              <div class="group relative rounded-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary-300 dark:hover:ring-primary-700 transition-all"
+                (click)="openDetail(item)">
+                <div class="aspect-square bg-surface-100 dark:bg-surface-800 flex items-center justify-center overflow-hidden relative">
+                  @if (isImage(item)) {
+                    <img [src]="mediaService.getMediaUrl(item.path)" [alt]="item.originalFilename" class="w-full h-full object-cover" loading="lazy" />
+                  } @else if (isVideo(item)) {
+                    <video [src]="mediaService.getMediaUrl(item.path)" class="w-full h-full object-cover" muted preload="metadata"></video>
+                    <div class="absolute inset-0 flex items-center justify-center bg-black/20">
+                      <div class="w-10 h-10 rounded-full bg-black/60 flex items-center justify-center">
+                        <i class="pi pi-play text-white text-sm ml-0.5"></i>
+                      </div>
+                    </div>
+                  } @else {
+                    <div class="flex flex-col items-center gap-2">
+                      <i class="pi pi-file-pdf text-4xl text-red-400"></i>
+                      <span class="text-xs text-surface-400 uppercase font-medium">{{ getExtension(item) }}</span>
+                    </div>
+                  }
+                  @if (isVideo(item)) {
+                    <div class="absolute top-2 left-2">
+                      <span class="text-[10px] font-bold bg-black/60 text-white px-1.5 py-0.5 rounded">VIDEO</span>
+                    </div>
+                  }
+                  <!-- Hover info -->
+                  <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <p class="text-[11px] text-white truncate">{{ item.originalFilename }}</p>
+                    <p class="text-[10px] text-white/70">{{ formatFileSize(item.size) }}</p>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <!-- List View -->
+          <div class="divide-y divide-surface-100 dark:divide-surface-800">
+            @for (item of filteredMedia(); track item.id) {
+              <div class="flex items-center gap-4 px-4 py-3 hover:bg-surface-50 dark:hover:bg-surface-800 cursor-pointer transition-colors"
+                (click)="openDetail(item)">
+                <div class="w-10 h-10 rounded-lg bg-surface-100 dark:bg-surface-800 flex items-center justify-center overflow-hidden flex-shrink-0">
+                  @if (isImage(item)) {
+                    <img [src]="mediaService.getMediaUrl(item.path)" class="w-full h-full object-cover" loading="lazy" />
+                  } @else if (isVideo(item)) {
+                    <i class="pi pi-video text-lg text-purple-400"></i>
+                  } @else {
+                    <i class="pi pi-file text-lg text-surface-400"></i>
+                  }
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-surface-900 dark:text-surface-0 truncate">{{ item.originalFilename }}</p>
+                  <p class="text-xs text-surface-400">{{ item.collection }} · {{ item.createdAt | date:'MMM d, y' }}</p>
+                </div>
+                <div class="flex items-center gap-4 flex-shrink-0">
+                  @if (isImage(item) && item.width) {
+                    <span class="text-xs text-surface-400 hidden md:inline">{{ item.width }}×{{ item.height }}</span>
+                  }
+                  <span class="text-xs text-surface-500 font-medium">{{ formatFileSize(item.size) }}</span>
+                  <p-tag [value]="getTypeLabel(item)" [severity]="getTypeSeverity(item)" />
+                </div>
+              </div>
+            }
+          </div>
+        }
       </div>
 
-      <!-- Drag & Drop Zone (shown when dragging) -->
+      <!-- Drag & Drop Zone -->
       @if (isDragging()) {
         <div class="fixed inset-0 bg-primary/5 border-2 border-dashed border-primary rounded-xl z-50 flex items-center justify-center"
           (drop)="onDrop($event)" (dragover)="$event.preventDefault()" (dragleave)="isDragging.set(false)">
@@ -92,112 +202,6 @@ import { MediaService, MediaItem } from '../../core/services/media.service';
             <i class="pi pi-cloud-upload text-5xl text-primary mb-3"></i>
             <p class="text-lg font-medium text-primary">Drop files here to upload</p>
           </div>
-        </div>
-      }
-
-      <!-- Upload progress -->
-      @if (uploading()) {
-        <div class="mb-4 p-4 bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700">
-          <div class="flex items-center gap-3">
-            <i class="pi pi-spin pi-spinner text-primary"></i>
-            <span class="text-sm text-surface-700 dark:text-surface-300">Uploading {{ uploadQueue() }} file(s)...</span>
-          </div>
-        </div>
-      }
-
-      <!-- Empty state -->
-      @if (!mediaService.isLoading() && filteredMedia().length === 0) {
-        <div class="flex flex-col items-center justify-center py-20 text-surface-400">
-          <i class="pi pi-images text-5xl mb-4"></i>
-          @if (media().length === 0) {
-            <p class="text-lg">No media files yet</p>
-            <p class="text-sm mt-1">Drag & drop files here or click Upload</p>
-          } @else {
-            <p class="text-lg">No files match your filters</p>
-          }
-        </div>
-      }
-
-      <!-- Grid View -->
-      @if (viewMode === 'grid' && filteredMedia().length > 0) {
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
-          @for (item of filteredMedia(); track item.id) {
-            <div class="group relative bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 overflow-hidden cursor-pointer hover:border-primary-300 dark:hover:border-primary-700 transition-all hover:shadow-md"
-              (click)="openDetail(item)">
-              <!-- Preview -->
-              <div class="aspect-square bg-surface-100 dark:bg-surface-800 flex items-center justify-center overflow-hidden relative">
-                @if (isImage(item)) {
-                  <img [src]="mediaService.getMediaUrl(item.path)" [alt]="item.originalFilename" class="w-full h-full object-cover" loading="lazy" />
-                } @else if (isVideo(item)) {
-                  <video [src]="mediaService.getMediaUrl(item.path)" class="w-full h-full object-cover" muted preload="metadata"></video>
-                  <div class="absolute inset-0 flex items-center justify-center bg-black/20">
-                    <div class="w-10 h-10 rounded-full bg-black/60 flex items-center justify-center">
-                      <i class="pi pi-play text-white text-sm ml-0.5"></i>
-                    </div>
-                  </div>
-                } @else {
-                  <div class="flex flex-col items-center gap-2">
-                    <i class="pi pi-file-pdf text-4xl text-red-400"></i>
-                    <span class="text-xs text-surface-400 uppercase font-medium">{{ getExtension(item) }}</span>
-                  </div>
-                }
-                <!-- Type badge -->
-                @if (isVideo(item)) {
-                  <div class="absolute top-2 left-2">
-                    <span class="text-[10px] font-bold bg-black/60 text-white px-1.5 py-0.5 rounded">VIDEO</span>
-                  </div>
-                }
-              </div>
-              <!-- Info -->
-              <div class="p-2.5">
-                <p class="text-xs font-medium text-surface-900 dark:text-surface-100 truncate">{{ item.originalFilename }}</p>
-                <p class="text-[10px] text-surface-400 mt-0.5">{{ formatFileSize(item.size) }}</p>
-              </div>
-            </div>
-          }
-        </div>
-      }
-
-      <!-- List View -->
-      @if (viewMode === 'list' && filteredMedia().length > 0) {
-        <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 divide-y divide-surface-200 dark:divide-surface-700">
-          @for (item of filteredMedia(); track item.id) {
-            <div class="flex items-center gap-4 p-3 hover:bg-surface-50 dark:hover:bg-surface-800 cursor-pointer transition-colors"
-              (click)="openDetail(item)">
-              <!-- Thumbnail -->
-              <div class="w-12 h-12 rounded-lg bg-surface-100 dark:bg-surface-800 flex items-center justify-center overflow-hidden flex-shrink-0">
-                @if (isImage(item)) {
-                  <img [src]="mediaService.getMediaUrl(item.path)" class="w-full h-full object-cover" loading="lazy" />
-                } @else if (isVideo(item)) {
-                  <i class="pi pi-video text-lg text-purple-400"></i>
-                } @else {
-                  <i class="pi pi-file text-lg text-surface-400"></i>
-                }
-              </div>
-              <!-- Info -->
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-surface-900 dark:text-surface-0 truncate">{{ item.originalFilename }}</p>
-                <p class="text-xs text-surface-400">{{ item.collection }} · {{ item.createdAt | date:'MMM d, y' }}</p>
-              </div>
-              <!-- Meta -->
-              <div class="flex items-center gap-4 flex-shrink-0">
-                @if (isImage(item) && item.width) {
-                  <span class="text-xs text-surface-400">{{ item.width }}×{{ item.height }}</span>
-                }
-                <span class="text-xs text-surface-500 font-medium">{{ formatFileSize(item.size) }}</span>
-                <p-tag [value]="getTypeLabel(item)" [severity]="getTypeSeverity(item)" />
-              </div>
-            </div>
-          }
-        </div>
-      }
-
-      <!-- Loading skeleton -->
-      @if (mediaService.isLoading() && media().length === 0) {
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
-          @for (i of [1,2,3,4,5,6,7,8,9,10,11,12]; track i) {
-            <div class="bg-surface-100 dark:bg-surface-800 rounded-xl aspect-square animate-pulse"></div>
-          }
         </div>
       }
     </div>
