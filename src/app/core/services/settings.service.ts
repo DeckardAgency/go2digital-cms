@@ -78,4 +78,10 @@ export class SettingsService {
   getSystemInfo(): Observable<SystemInfo> {
     return this.http.get<SystemInfo>(`${this.apiUrl}/maintenance/info`);
   }
+
+  downloadBackup(filename: string, password: string): Observable<Blob> {
+    return this.http.post(`${this.apiUrl}/maintenance/database/backups/${filename}/download`, { password }, {
+      responseType: 'blob',
+    });
+  }
 }

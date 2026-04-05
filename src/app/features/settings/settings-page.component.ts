@@ -14,6 +14,7 @@ import { PasswordModule } from 'primeng/password';
 import { ConfirmationService, MessageService } from 'primeng/api';
 
 import { SettingsService, Setting, BackupInfo, SystemInfo } from '../../core/services/settings.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-settings-page',
@@ -282,7 +283,12 @@ import { SettingsService, Setting, BackupInfo, SystemInfo } from '../../core/ser
                           <div class="text-xs text-surface-400">{{ b.date }}</div>
                         </div>
                       </div>
-                      <p-tag [value]="b.size" severity="info" />
+                      <div class="flex items-center gap-2">
+                        <p-tag [value]="b.size" severity="info" />
+                        @if (authService.isSuperAdmin()) {
+                          <p-button icon="pi pi-download" [text]="true" size="small" severity="secondary" (onClick)="openDownloadDialog(b.filename)" />
+                        }
+                      </div>
                     </div>
                   }
                 </div>
@@ -291,6 +297,56 @@ import { SettingsService, Setting, BackupInfo, SystemInfo } from '../../core/ser
           </div>
         </div>
       }
+
+      <!-- Download Confirmation Dialog (GitHub-style) -->
+      <p-dialog
+        header="Confirm Download"
+        [(visible)]="showDownloadDialog"
+        [modal]="true"
+        [style]="{ width: '480px' }"
+        [closable]="true">
+        <div class="flex flex-col gap-4">
+          <div class="p-4 bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+            <div class="flex items-start gap-3">
+              <i class="pi pi-exclamation-triangle text-yellow-600 dark:text-yellow-400 text-lg mt-0.5"></i>
+              <div>
+                <p class="text-sm font-medium text-yellow-800 dark:text-yellow-300">This action requires authentication</p>
+                <p class="text-xs text-yellow-700 dark:text-yellow-400 mt-1">Database backups contain sensitive data. To confirm this download, please enter your password.</p>
+              </div>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-sm text-surface-500">File</label>
+            <span class="text-sm font-mono font-medium text-surface-900 dark:text-surface-0">{{ downloadFilename }}</span>
+          </div>
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Password</label>
+            <p-password
+              [(ngModel)]="downloadPassword"
+              [feedback]="false"
+              [toggleMask]="true"
+              styleClass="w-full"
+              inputStyleClass="w-full"
+              placeholder="Enter your account password"
+              (keydown.enter)="confirmDownload()" />
+            @if (downloadError()) {
+              <span class="text-xs text-red-500">{{ downloadError() }}</span>
+            }
+          </div>
+        </div>
+        <ng-template #footer>
+          <div class="flex justify-end gap-2">
+            <p-button label="Cancel" severity="secondary" [outlined]="true" (onClick)="showDownloadDialog = false" />
+            <p-button
+              label="Confirm & Download"
+              icon="pi pi-download"
+              severity="danger"
+              [loading]="downloading()"
+              [disabled]="!downloadPassword"
+              (onClick)="confirmDownload()" />
+          </div>
+        </ng-template>
+      </p-dialog>
 
       <!-- ═══ ADVANCED (raw) ═══ -->
       @if (activeSection === 'advanced') {
@@ -373,6 +429,7 @@ import { SettingsService, Setting, BackupInfo, SystemInfo } from '../../core/ser
 })
 export class SettingsPageComponent implements OnInit, OnDestroy {
   readonly settingsService = inject(SettingsService);
+  readonly authService = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly confirmationService = inject(ConfirmationService);
@@ -393,6 +450,13 @@ export class SettingsPageComponent implements OnInit, OnDestroy {
   creatingBackup = signal(false);
   cacheResult = signal<{ success: boolean; output: string } | null>(null);
   backups = signal<BackupInfo[]>([]);
+
+  // Download dialog
+  showDownloadDialog = false;
+  downloadFilename = '';
+  downloadPassword = '';
+  downloadError = signal<string | null>(null);
+  downloading = signal(false);
 
   // Dialog
   showDialog = false;
@@ -594,6 +658,59 @@ export class SettingsPageComponent implements OnInit, OnDestroy {
       error: (err) => {
         this.creatingBackup.set(false);
         this.messageService.add({ severity: 'error', summary: 'Backup failed', detail: err.error?.error || 'Unknown error' });
+      },
+    });
+  }
+
+  // ─── DOWNLOAD BACKUP ────────────────────────────────────
+
+  openDownloadDialog(filename: string): void {
+    this.downloadFilename = filename;
+    this.downloadPassword = '';
+    this.downloadError.set(null);
+    this.showDownloadDialog = true;
+  }
+
+  confirmDownload(): void {
+    if (!this.downloadPassword) return;
+
+    this.downloading.set(true);
+    this.downloadError.set(null);
+
+    this.settingsService.downloadBackup(this.downloadFilename, this.downloadPassword).subscribe({
+      next: (blob) => {
+        this.downloading.set(false);
+        this.showDownloadDialog = false;
+
+        // Trigger browser download
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = this.downloadFilename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        this.messageService.add({ severity: 'success', summary: 'Download started' });
+      },
+      error: (err) => {
+        this.downloading.set(false);
+        // Try to parse error from blob response
+        if (err.error instanceof Blob) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            try {
+              const json = JSON.parse(reader.result as string);
+              this.downloadError.set(json.error || 'Download failed');
+            } catch {
+              this.downloadError.set('Download failed');
+            }
+          };
+          reader.readAsText(err.error);
+        } else {
+          this.downloadError.set(err.error?.error || 'Invalid password or download failed');
+        }
       },
     });
   }

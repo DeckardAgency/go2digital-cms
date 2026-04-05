@@ -127,6 +127,10 @@ export class AuthService {
     return this._user()?.roles?.includes('ROLE_ADMIN') ?? false;
   }
 
+  isSuperAdmin(): boolean {
+    return this._user()?.roles?.includes('ROLE_SUPER_ADMIN') ?? false;
+  }
+
   private clearStorage(): void {
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.REFRESH_KEY);
