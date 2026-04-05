@@ -31,12 +31,15 @@ import { HomepageService } from '../../../core/services/homepage.service';
   ],
   providers: [ConfirmationService],
   template: `
-    <div class="flex items-center gap-3 mb-6">
-      <p-button icon="pi pi-arrow-left" severity="secondary" [text]="true" [rounded]="true" (onClick)="router.navigate(['/homepage'])" />
-      <div>
-        <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">Horizontal Scroll Panels</h1>
-        <p class="text-surface-500 dark:text-surface-400 text-sm mt-0.5">4 panels with statistics shown during horizontal scroll — Section #2</p>
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-3">
+        <p-button icon="pi pi-arrow-left" severity="secondary" [text]="true" [rounded]="true" (onClick)="router.navigate(['/homepage'])" />
+        <div>
+          <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">Horizontal Scroll Panels</h1>
+          <p class="text-surface-500 dark:text-surface-400 text-sm mt-0.5">4 panels with statistics shown during horizontal scroll — Section #2</p>
+        </div>
       </div>
+      <p-button label="New Panel" icon="pi pi-plus" (onClick)="router.navigate(['/homepage/panels/new'])" />
     </div>
 
     <app-data-table-wrapper

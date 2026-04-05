@@ -22,47 +22,61 @@ import { HomepageService } from '../../../core/services/homepage.service';
     TranslationEditorComponent,
   ],
   template: `
-    <div class="max-w-4xl">
-      <div class="flex items-center justify-between mb-6">
+    <div class="space-y-6">
+      <!-- Header -->
+      <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <p-button
-            icon="pi pi-arrow-left"
-            severity="secondary"
-            [text]="true"
-            [rounded]="true"
-            (onClick)="router.navigate(['/homepage/tracking'])" />
+          <p-button icon="pi pi-arrow-left" severity="secondary" [text]="true" [rounded]="true" (onClick)="router.navigate(['/homepage/tracking'])" />
           <div>
-            <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">
-              {{ isEditMode() ? 'Edit Tracking Feature' : 'New Tracking Feature' }}
-            </h1>
+            <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">{{ isEditMode() ? 'Edit Tracking Feature' : 'New Tracking Feature' }}</h1>
             <p class="text-surface-500 dark:text-surface-400 text-sm mt-0.5">Tracking & analytics section feature</p>
           </div>
         </div>
-        <p-button
-          label="Save"
-          icon="pi pi-check"
-          [loading]="homepageService.isLoading()"
-          (onClick)="onSave()" />
+        <p-button label="Save" icon="pi pi-save" [loading]="homepageService.isLoading()" (onClick)="onSave()" />
       </div>
 
-      <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-5 mb-5">
-        <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Content</h2>
-        <app-translation-editor
-          [translations]="translations()"
-          [fields]="translationFields"
-          (translationsChange)="translations.set($event)" />
-      </div>
-
-      <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-5 mb-5">
-        <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Details</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="flex flex-col gap-2">
-            <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Icon</label>
-            <input pInputText class="w-full" [(ngModel)]="icon" />
+      <!-- Two-column -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left 2/3: Content -->
+        <div class="lg:col-span-2">
+          <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+            <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-5">Content</h2>
+            <app-translation-editor
+              [translations]="translations()"
+              [fields]="translationFields"
+              (translationsChange)="translations.set($event)" />
           </div>
-          <div class="flex flex-col gap-2">
-            <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Sort Order</label>
-            <p-inputNumber class="w-full" [(ngModel)]="sortOrder" [useGrouping]="false" />
+        </div>
+
+        <!-- Right 1/3: Settings + Info -->
+        <div class="space-y-6">
+          <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+            <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-5">Settings</h2>
+            <div class="flex flex-col gap-4">
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Icon</label>
+                <input pInputText class="w-full" [(ngModel)]="icon" />
+              </div>
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Sort Order</label>
+                <p-inputNumber class="w-full" [(ngModel)]="sortOrder" [useGrouping]="false" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Info -->
+          <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+            <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Info</h2>
+            <div class="flex flex-col gap-3 text-sm">
+              <div class="flex justify-between">
+                <span class="text-surface-500">Section</span>
+                <span class="font-medium text-surface-900 dark:text-surface-0">#10 Tracking & Analytics</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-surface-500">Type</span>
+                <span class="font-medium text-surface-900 dark:text-surface-0">Collection item</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
