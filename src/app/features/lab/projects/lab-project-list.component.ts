@@ -21,6 +21,7 @@ import {
   BulkAction,
 } from '../../../shared/components/data-table-wrapper';
 import { LabService, LabProjectListParams } from '../../../core/services/lab.service';
+import { MediaService } from '../../../core/services/media.service';
 import { LabProject, LabCategory } from '../../../core/models/lab.model';
 
 @Component({
@@ -99,16 +100,30 @@ import { LabProject, LabCategory } from '../../../core/models/lab.model';
 
       <!-- Custom Cells -->
       <ng-template dtCell="title" let-row>
-        <span class="font-medium text-surface-900 dark:text-surface-100">
-          {{ row.translations?.hr?.title || '(no title)' }}
-        </span>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-surface-100 dark:bg-surface-800 flex items-center justify-center overflow-hidden flex-shrink-0">
+            @if (getImageUrl(row)) {
+              <img [src]="getImageUrl(row)" class="w-full h-full object-cover" />
+            } @else {
+              <i class="pi pi-image text-surface-400 text-sm"></i>
+            }
+          </div>
+          <div>
+            <span class="font-medium text-surface-900 dark:text-surface-100">
+              {{ row.translations?.hr?.title || '(no title)' }}
+            </span>
+            @if (row.translations?.hr?.subtitle) {
+              <p class="text-xs text-surface-400 mt-0.5 truncate max-w-xs">{{ row.translations.hr.subtitle }}</p>
+            }
+          </div>
+        </div>
       </ng-template>
 
       <ng-template dtCell="categories" let-row>
         @if (row.categories?.length) {
           <div class="flex flex-wrap gap-1">
-            @for (cat of row.categories; track cat.id) {
-              <p-tag [value]="cat.translations?.hr?.name || cat.slug" severity="info" />
+            @for (cat of row.categories; track getCatId(cat)) {
+              <p-tag [value]="getCatName(cat)" severity="info" />
             }
           </div>
         } @else {
@@ -145,6 +160,7 @@ import { LabProject, LabCategory } from '../../../core/models/lab.model';
 })
 export class LabProjectListComponent implements OnInit {
   readonly labService = inject(LabService);
+  readonly mediaService = inject(MediaService);
   readonly router = inject(Router);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
@@ -264,6 +280,25 @@ export class LabProjectListComponent implements OnInit {
 
   setCurrentRow(row: any): void {
     this.currentRow = row;
+  }
+
+  getImageUrl(row: any): string {
+    const image = row.image;
+    if (!image) return '';
+    if (typeof image === 'object' && image.path) {
+      return this.mediaService.getMediaUrl(image.path);
+    }
+    return '';
+  }
+
+  getCatName(cat: any): string {
+    if (typeof cat === 'string') return cat.split('/').pop() || '';
+    return cat.translations?.hr?.name || cat.name || cat.slug || '—';
+  }
+
+  getCatId(cat: any): string {
+    if (typeof cat === 'string') return cat;
+    return cat.id || cat.slug || '';
   }
 
   onBulkAction(event: { action: string; selected: any[] }): void {
