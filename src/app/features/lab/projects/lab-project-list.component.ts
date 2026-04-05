@@ -292,7 +292,12 @@ export class LabProjectListComponent implements OnInit {
   }
 
   getCatName(cat: any): string {
-    if (typeof cat === 'string') return cat.split('/').pop() || '';
+    // IRI string: resolve from loaded categories
+    if (typeof cat === 'string') {
+      const id = cat.split('/').pop() || '';
+      const found = this.categories().find(c => c.id === id);
+      return found?.translations?.hr?.name || found?.slug || id;
+    }
     return cat.translations?.hr?.name || cat.name || cat.slug || '—';
   }
 
