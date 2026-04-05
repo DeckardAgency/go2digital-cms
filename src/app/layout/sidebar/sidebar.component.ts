@@ -75,6 +75,14 @@ export class SidebarComponent {
     }
   }
 
+  getVisibleModules(): NavModule[] {
+    const roles = this.authService.user()?.roles || [];
+    return this.navigationService.modules.filter(m => {
+      if (!m.requiredRole) return true;
+      return roles.includes(m.requiredRole);
+    });
+  }
+
   getVisibleItems(module: NavModule): NavItem[] {
     const roles = this.authService.user()?.roles || [];
     return module.children.filter(item => {

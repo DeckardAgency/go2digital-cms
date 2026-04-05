@@ -8,6 +8,7 @@ export interface NavModule {
   icon: string;
   route: string;
   children: NavItem[];
+  requiredRole?: string;
 }
 
 export interface NavItem {
@@ -117,12 +118,21 @@ export class NavigationService {
       ]
     },
     {
+      id: 'users',
+      label: 'Users',
+      icon: 'pi pi-users',
+      route: '/users',
+      requiredRole: 'ROLE_SUPER_ADMIN',
+      children: [
+        { id: 'users-list', label: 'All Users', icon: 'pi pi-users', route: '/users' },
+      ]
+    },
+    {
       id: 'settings',
       label: 'Settings',
       icon: 'pi pi-sliders-h',
       route: '/settings/general',
       children: [
-        { id: 'settings-users', label: 'Users', icon: 'pi pi-users', route: '/users', requiredRole: 'ROLE_SUPER_ADMIN' },
         { id: 'settings-general', label: 'General', icon: 'pi pi-cog', route: '/settings/general' },
         { id: 'settings-integrations', label: 'Integrations', icon: 'pi pi-link', route: '/settings/integrations' },
         { id: 'settings-seo', label: 'SEO', icon: 'pi pi-search', route: '/settings/seo' },

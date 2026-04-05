@@ -153,6 +153,21 @@ import { AuthService } from '../../core/services/auth.service';
             inputStyleClass="w-full"
             [placeholder]="isEditMode() ? 'Leave empty to keep current' : 'Enter password'" />
 
+          <!-- Repeat password -->
+          <div class="flex flex-col gap-2">
+            <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Repeat Password</label>
+            <p-password
+              [(ngModel)]="form.confirmPassword"
+              [feedback]="false"
+              [toggleMask]="true"
+              styleClass="w-full"
+              inputStyleClass="w-full"
+              placeholder="Repeat password" />
+            @if (form.confirmPassword && form.password !== form.confirmPassword) {
+              <span class="text-xs text-red-500">Passwords do not match</span>
+            }
+          </div>
+
           <!-- Strength meter -->
           @if (form.password) {
             <div class="flex flex-col gap-1.5">
@@ -225,6 +240,7 @@ export class UserListComponent implements OnInit {
     firstName: '',
     lastName: '',
     password: '',
+    confirmPassword: '',
     role: 'ROLE_EDITOR',
     isActive: true,
   };
@@ -256,7 +272,7 @@ export class UserListComponent implements OnInit {
     this.isEditMode.set(false);
     this.editId.set(null);
     this.generatedPassword.set(null);
-    this.form = { email: '', firstName: '', lastName: '', password: '', role: 'ROLE_EDITOR', isActive: true };
+    this.form = { email: '', firstName: '', lastName: '', password: '', confirmPassword: '', role: 'ROLE_EDITOR', isActive: true };
     this.drawerVisible = true;
   }
 
@@ -269,6 +285,7 @@ export class UserListComponent implements OnInit {
       firstName: user.firstName,
       lastName: user.lastName,
       password: '',
+      confirmPassword: '',
       role: this.getHighestRole(user.roles),
       isActive: user.isActive,
     };
@@ -283,6 +300,11 @@ export class UserListComponent implements OnInit {
 
     if (!this.isEditMode() && !this.form.password) {
       this.messageService.add({ severity: 'warn', summary: 'Password is required for new users' });
+      return;
+    }
+
+    if (this.form.password && this.form.password !== this.form.confirmPassword) {
+      this.messageService.add({ severity: 'warn', summary: 'Passwords do not match' });
       return;
     }
 
@@ -400,6 +422,7 @@ export class UserListComponent implements OnInit {
     pw = pw.split('').sort(() => Math.random() - 0.5).join('');
 
     this.form.password = pw;
+    this.form.confirmPassword = pw;
     this.generatedPassword.set(pw);
   }
 
