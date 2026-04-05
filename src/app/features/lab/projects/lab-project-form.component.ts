@@ -1,6 +1,7 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
@@ -175,6 +176,7 @@ export class LabProjectFormComponent implements OnInit {
   readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly messageService = inject(MessageService);
+  private readonly http = inject(HttpClient);
 
   isEditMode = signal(false);
   projectId = signal<string | null>(null);
@@ -248,12 +250,7 @@ export class LabProjectFormComponent implements OnInit {
         }
 
         if (project.image) {
-          const img = project.image;
-          if (typeof img === 'object' && img.path) {
-            this.imageUrl.set(this.getFullImageUrl('/storage/media/' + img.path));
-          } else if (typeof img === 'string') {
-            this.imageUrl.set(img);
-          }
+          this.resolveImageUrl(project.image);
         }
 
         if ((project as any).createdAt) {
@@ -301,6 +298,23 @@ export class LabProjectFormComponent implements OnInit {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to remove image' });
       }
     });
+  }
+
+  private resolveImageUrl(image: any): void {
+    if (typeof image === 'object' && image.path) {
+      this.imageUrl.set(this.getFullImageUrl('/storage/media/' + image.path));
+    } else if (typeof image === 'string' && image.startsWith('/api/media/')) {
+      const mediaId = image.replace('/api/media/', '');
+      this.http.get<any>(`${environment.apiUrl}/media/${mediaId}`).subscribe({
+        next: (media: any) => {
+          if (media.path) {
+            this.imageUrl.set(this.getFullImageUrl('/storage/media/' + media.path));
+          }
+        }
+      });
+    } else if (typeof image === 'string' && image) {
+      this.imageUrl.set(this.getFullImageUrl(image));
+    }
   }
 
   private getFullImageUrl(path: string): string {
