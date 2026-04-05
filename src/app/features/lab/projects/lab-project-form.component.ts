@@ -62,13 +62,15 @@ import { environment } from '../../../../environments/environment';
           <!-- Basic Content -->
           <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
             <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-5">Content</h2>
+
+            <!-- Title -->
             <app-translation-editor
               [translations]="translations()"
-              [fields]="translationFields"
+              [fields]="titleFields"
               (translationsChange)="onTranslationsChange($event)" />
 
-            <!-- Slug -->
-            <div class="flex flex-col gap-2 mt-5 pt-5 border-t border-surface-200 dark:border-surface-700">
+            <!-- Slug (between title and subtitle) -->
+            <div class="flex flex-col gap-2 my-4">
               <div class="flex items-center justify-between">
                 <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Slug</label>
                 <button type="button"
@@ -82,10 +84,13 @@ import { environment } from '../../../../environments/environment';
                 </button>
               </div>
               <input pInputText class="w-full" [(ngModel)]="slug" [readonly]="slugLocked" [class.opacity-60]="slugLocked" />
-              @if (slugLocked) {
-                <span class="text-xs text-surface-400">Auto-generated from title. Click lock to edit manually.</span>
-              }
             </div>
+
+            <!-- Subtitle + Intro -->
+            <app-translation-editor
+              [translations]="translations()"
+              [fields]="restFields"
+              (translationsChange)="onTranslationsChange($event)" />
           </div>
 
           <!-- ═══ SECTIONS EDITOR ═══ -->
@@ -298,8 +303,11 @@ export class LabProjectFormComponent implements OnInit {
   createdAt = signal('');
   updatedAt = signal('');
 
-  translationFields = [
+  titleFields = [
     { key: 'title', label: 'Title', type: 'text' as const },
+  ];
+
+  restFields = [
     { key: 'subtitle', label: 'Subtitle', type: 'text' as const },
     { key: 'body', label: 'Intro Text', type: 'textarea' as const },
   ];
