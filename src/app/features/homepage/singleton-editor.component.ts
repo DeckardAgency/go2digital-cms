@@ -111,6 +111,9 @@ export interface SingletonNonTranslatableField {
 
         <!-- Right 1/3 -->
         <div class="space-y-6">
+          <!-- Preview (projected content) -->
+          <ng-content select="[preview]"></ng-content>
+
           <!-- Image upload (if imageField is set) -->
           @if (imageField) {
             <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
@@ -169,9 +172,6 @@ export interface SingletonNonTranslatableField {
               }
             </div>
           }
-
-          <!-- Preview (projected content) -->
-          <ng-content select="[preview]"></ng-content>
 
           <!-- Section Info -->
           <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
