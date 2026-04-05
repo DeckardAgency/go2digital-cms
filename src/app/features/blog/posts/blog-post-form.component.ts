@@ -254,7 +254,15 @@ export class BlogPostFormComponent implements OnInit {
         this.date = post.date ? new Date(post.date) : null;
         this.status = post.status;
         this.featured = post.featured;
-        this.categoryId = post.category?.id || null;
+        // category can be object with .id, IRI string, or null
+        const cat = post.category as any;
+        if (typeof cat === 'string' && cat.includes('/')) {
+          this.categoryId = cat.split('/').pop() || null;
+        } else if (cat && typeof cat === 'object') {
+          this.categoryId = cat.id || null;
+        } else {
+          this.categoryId = null;
+        }
 
         if (post.translations) {
           this.translations.set({

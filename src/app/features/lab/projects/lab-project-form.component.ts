@@ -230,7 +230,9 @@ export class LabProjectFormComponent implements OnInit {
         this.slug = project.slug;
         this.status = project.status;
         this.featured = project.featured;
-        this.selectedCategoryIds = (project.categories || []).map(c => c.id);
+        this.selectedCategoryIds = (project.categories || []).map((c: any) =>
+          typeof c === 'string' ? c.split('/').pop() || '' : c.id || ''
+        ).filter((id: string) => id.length > 0);
 
         if (project.translations) {
           this.translations.set({
