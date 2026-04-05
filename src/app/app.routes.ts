@@ -93,7 +93,8 @@ export const routes: Routes = [
       // Files
       { path: 'files', loadComponent: () => import('./features/files/files-page.component').then(m => m.FilesPageComponent) },
       // Settings
-      { path: 'settings', loadComponent: () => import('./features/settings/settings-page.component').then(m => m.SettingsPageComponent) },
+      { path: 'settings', redirectTo: 'settings/general', pathMatch: 'full' },
+      { path: 'settings/:section', loadComponent: () => import('./features/settings/settings-page.component').then(m => m.SettingsPageComponent) },
       // Contact
       { path: 'contact/info', loadComponent: () => import('./features/contact/contact-info-list.component').then(m => m.ContactInfoListComponent) },
       { path: 'contact/info/new', loadComponent: () => import('./features/contact/contact-info-form.component').then(m => m.ContactInfoFormComponent) },
