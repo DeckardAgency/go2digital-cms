@@ -237,11 +237,12 @@ export class HeroEditorComponent implements OnInit {
     }
 
     const formData = new FormData();
-    formData.append('video', file);
+    formData.append('file', file);
 
-    this.http.post<any>(`${this.apiUrl}/homepage-hero/video/${type}`, formData).subscribe({
+    const field = type === 'desktop' ? 'video' : 'mobileVideo';
+    this.http.post<any>(`${this.apiUrl}/singletons/homepage-hero/media/${field}`, formData).subscribe({
       next: (res) => {
-        const url = this.getFullUrl(res.videoUrl);
+        const url = this.getFullUrl(res.url);
         if (type === 'desktop') {
           this.desktopVideoUrl.set(url);
           this.desktopFilename.set(res.originalFilename || file.name);
@@ -262,7 +263,8 @@ export class HeroEditorComponent implements OnInit {
   }
 
   removeVideo(type: 'desktop' | 'mobile'): void {
-    this.http.delete<any>(`${this.apiUrl}/homepage-hero/video/${type}`).subscribe({
+    const field = type === 'desktop' ? 'video' : 'mobileVideo';
+    this.http.delete<any>(`${this.apiUrl}/singletons/homepage-hero/media/${field}`).subscribe({
       next: () => {
         if (type === 'desktop') {
           this.desktopVideoUrl.set('');
