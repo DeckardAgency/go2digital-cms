@@ -7,6 +7,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
 import { CheckboxModule } from 'primeng/checkbox';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { ButtonModule } from 'primeng/button';
 import { EditorModule } from 'primeng/editor';
 import { TooltipModule } from 'primeng/tooltip';
@@ -26,7 +27,7 @@ import { environment } from '../../../../environments/environment';
   standalone: true,
   imports: [
     CommonModule, FormsModule, InputTextModule, TextareaModule, SelectModule,
-    CheckboxModule, ButtonModule, EditorModule, TooltipModule,
+    CheckboxModule, ButtonModule, EditorModule, TooltipModule, ToggleSwitchModule,
     TranslationEditorComponent, ImageUploadComponent, FocalPointPickerComponent,
     SeoEditorComponent,
   ],
@@ -169,8 +170,8 @@ import { environment } from '../../../../environments/environment';
                   <p-select [options]="statusOptions" [(ngModel)]="status" optionLabel="label" optionValue="value" class="w-full" />
                 </div>
                 <div class="flex items-center gap-2 pt-6">
-                  <p-checkbox [(ngModel)]="featured" [binary]="true" inputId="featured" />
-                  <label for="featured" class="text-sm font-medium text-surface-700 dark:text-surface-300 whitespace-nowrap">Featured</label>
+                  <label class="text-sm font-medium text-surface-700 dark:text-surface-300 whitespace-nowrap">Featured</label>
+                  <p-toggleswitch [(ngModel)]="featured" />
                 </div>
               </div>
               <div class="flex flex-col gap-2">
