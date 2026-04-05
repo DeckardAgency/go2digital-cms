@@ -40,6 +40,7 @@ import { LocationService, Totem, City } from '../../../core/services/location.se
         [columns]="columns"
         [data]="paginatedTotems()"
         [totalRecords]="filteredTotems().length"
+        [pageSize]="50"
         [loading]="locationService.isLoading()"
         [filterChips]="filterChips()"
         (stateChange)="onStateChange($event)"
@@ -154,7 +155,7 @@ export class TotemListComponent implements OnInit {
   currentRow: Totem | null = null;
   searchTerm = '';
   currentPage = 1;
-  pageSize = 20;
+  pageSize = 50;
 
   // Reorder
   reorderMode = signal(false);

@@ -334,14 +334,14 @@ export class DataTableWrapperComponent implements OnInit, OnDestroy, AfterConten
 
   visibleCols = computed(() => this.columns.filter(c => c.defaultVisible));
 
-  totalPagesCount = computed(() => Math.max(1, Math.ceil(this.totalRecords / this.pageSize)));
+  totalPagesCount(): number { return Math.max(1, Math.ceil(this.totalRecords / this.pageSize)); }
 
-  showingFrom = computed(() => {
+  showingFrom(): number {
     if (this.totalRecords === 0) return 0;
     return (this.currentPage() - 1) * this.pageSize + 1;
-  });
+  }
 
-  showingTo = computed(() => Math.min(this.currentPage() * this.pageSize, this.totalRecords));
+  showingTo(): number { return Math.min(this.currentPage() * this.pageSize, this.totalRecords); }
 
   totalColSpan = computed(() => {
     let count = this.visibleCols().length;
