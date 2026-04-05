@@ -231,6 +231,66 @@ import { environment } from '../../../../environments/environment';
                   (focalPointChange)="onFocalPointChange($event)" />
               </div>
             }
+
+            <!-- Image Details -->
+            @if (imageData()) {
+              <div class="mt-4 pt-4 border-t border-surface-200 dark:border-surface-700">
+                <div class="grid grid-cols-2 gap-y-2.5 gap-x-4 text-sm">
+                  <div>
+                    <span class="text-xs text-surface-400 block">Filename</span>
+                    <span class="font-medium text-surface-900 dark:text-surface-0 text-xs break-all">{{ imageData()!.originalFilename || imageData()!.filename }}</span>
+                  </div>
+                  <div>
+                    <span class="text-xs text-surface-400 block">Type</span>
+                    <span class="font-medium text-surface-900 dark:text-surface-0 text-xs">{{ imageData()!.mimeType }}</span>
+                  </div>
+                  <div>
+                    <span class="text-xs text-surface-400 block">Size</span>
+                    <span class="font-medium text-surface-900 dark:text-surface-0 text-xs">{{ formatFileSize(imageData()!.size) }}</span>
+                  </div>
+                  @if (imageData()!.width) {
+                    <div>
+                      <span class="text-xs text-surface-400 block">Dimensions</span>
+                      <span class="font-medium text-surface-900 dark:text-surface-0 text-xs">{{ imageData()!.width }} × {{ imageData()!.height }}px</span>
+                    </div>
+                  }
+                </div>
+
+                <!-- Optimize button -->
+                @if (imageData()!.mimeType !== 'image/webp') {
+                  <div class="mt-3">
+                    <p-button
+                      label="Optimize for Web"
+                      icon="pi pi-bolt"
+                      severity="secondary"
+                      [outlined]="true"
+                      size="small"
+                      styleClass="w-full"
+                      [loading]="optimizing()"
+                      (onClick)="optimizeImage()" />
+                    <p class="text-[10px] text-surface-400 mt-1.5 text-center">Convert to WebP for smaller file size</p>
+                  </div>
+                } @else {
+                  <div class="mt-3 flex items-center gap-2 justify-center">
+                    <i class="pi pi-check-circle text-green-500 text-xs"></i>
+                    <span class="text-xs text-green-600 dark:text-green-400 font-medium">Already optimized (WebP)</span>
+                  </div>
+                }
+
+                <!-- Optimization result -->
+                @if (optimizeResult()) {
+                  <div class="mt-3 p-3 bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-lg">
+                    <div class="flex items-center gap-1.5 text-green-700 dark:text-green-400 text-xs font-medium mb-1">
+                      <i class="pi pi-check-circle text-xs"></i> Optimized
+                    </div>
+                    <div class="text-xs text-surface-600 dark:text-surface-400">
+                      {{ formatFileSize(optimizeResult()!.originalSize) }} → {{ formatFileSize(optimizeResult()!.optimizedSize) }}
+                      <span class="font-medium text-green-600 dark:text-green-400">({{ optimizeResult()!.savingsPercent }}% smaller)</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
           </div>
 
           <!-- Info Card -->
@@ -289,7 +349,10 @@ export class LabProjectFormComponent implements OnInit {
   selectedCategoryIds: string[] = [];
   allCategories = signal<LabCategory[]>([]);
   imageUrl = signal('');
+  imageData = signal<any>(null);
   isUploadingImage = signal(false);
+  optimizing = signal(false);
+  optimizeResult = signal<{ originalSize: number; optimizedSize: number; savingsPercent: number } | null>(null);
   focalX = 50;
   focalY = 50;
   createdAt = signal('');
@@ -494,6 +557,7 @@ export class LabProjectFormComponent implements OnInit {
   private resolveImageUrl(image: any): void {
     if (typeof image === 'object' && image.path) {
       this.imageUrl.set(this.getFullImageUrl('/storage/media/' + image.path));
+      this.imageData.set(image);
       this.focalX = image.focalX ?? 50;
       this.focalY = image.focalY ?? 50;
     } else if (typeof image === 'string' && image.startsWith('/api/media/')) {
@@ -501,6 +565,7 @@ export class LabProjectFormComponent implements OnInit {
       this.http.get<any>(`${environment.apiUrl}/media/${mediaId}`).subscribe({
         next: (media: any) => {
           if (media.path) this.imageUrl.set(this.getFullImageUrl('/storage/media/' + media.path));
+          this.imageData.set(media);
           this.focalX = media.focalX ?? 50;
           this.focalY = media.focalY ?? 50;
         }
@@ -514,6 +579,35 @@ export class LabProjectFormComponent implements OnInit {
     if (!path) return '';
     if (path.startsWith('http')) return path;
     return environment.apiUrl.replace('/api', '') + path;
+  }
+
+  optimizeImage(): void {
+    const img = this.imageData();
+    if (!img?.id) return;
+    this.optimizing.set(true);
+    this.optimizeResult.set(null);
+    this.http.post<any>(`${environment.apiUrl}/media/${img.id}/optimize`, { quality: 80 }).subscribe({
+      next: (res) => {
+        this.optimizing.set(false);
+        this.optimizeResult.set(res);
+        // Update image data with new values
+        this.imageData.set({ ...img, mimeType: res.mimeType, size: res.optimizedSize, path: res.path, width: res.width, height: res.height });
+        this.imageUrl.set(this.getFullImageUrl('/storage/media/' + res.path));
+        this.messageService.add({ severity: 'success', summary: 'Image optimized', detail: `${res.savingsPercent}% smaller` });
+      },
+      error: (err) => {
+        this.optimizing.set(false);
+        this.messageService.add({ severity: 'error', summary: 'Optimization failed', detail: err.error?.error || 'Unknown error' });
+      },
+    });
+  }
+
+  formatFileSize(bytes: number): string {
+    if (!bytes) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   }
 
   // ─── SEO ───────────────────────────────────────────────
