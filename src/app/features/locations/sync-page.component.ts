@@ -53,27 +53,70 @@ import { LocationService, SyncStatus, SyncReport, SyncLogEntry } from '../../cor
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Sync Card -->
-        <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
-          <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">CDN Sync</h2>
-          <div class="flex flex-col gap-4">
+        <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 overflow-hidden">
+          <!-- Sync header with status indicator -->
+          <div class="flex items-center justify-between p-6 pb-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center"
+                [class]="syncStatus()?.lastSyncedAt ? 'bg-green-100 dark:bg-green-900/20' : 'bg-surface-100 dark:bg-surface-800'">
+                <i class="pi pi-sync" [class]="syncStatus()?.lastSyncedAt ? 'text-green-600' : 'text-surface-400'"></i>
+              </div>
+              <div>
+                <h2 class="font-semibold text-surface-900 dark:text-surface-0">CDN Sync</h2>
+                <p class="text-xs text-surface-500 mt-0.5">cdn.go2digital.hr/loc.json</p>
+              </div>
+            </div>
+            <p-button
+              label="Sync Now"
+              icon="pi pi-sync"
+              size="small"
+              [loading]="isSyncing()"
+              (onClick)="onSync()" />
+          </div>
+
+          <!-- Last sync info -->
+          <div class="px-6 pb-4">
             @if (syncStatus()?.lastSyncedAt) {
-              <div class="text-sm text-surface-500 dark:text-surface-400">
-                Last synced: <span class="font-medium text-surface-900 dark:text-surface-0">{{ syncStatus()!.lastSyncedAt | date:'dd.MM.yyyy HH:mm' }}</span>
+              <div class="flex items-center gap-2 text-sm">
+                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                <span class="text-surface-500">Last synced</span>
+                <span class="font-medium text-surface-900 dark:text-surface-0">{{ syncStatus()!.lastSyncedAt | date:'dd.MM.yyyy HH:mm' }}</span>
               </div>
             } @else {
-              <div class="text-sm text-surface-500">Never synced</div>
-            }
-            <p-button label="Sync from CDN" icon="pi pi-sync" [loading]="isSyncing()" (onClick)="onSync()" />
-            @if (lastReport()) {
-              <div class="bg-surface-50 dark:bg-surface-800 rounded-lg p-4 text-sm space-y-1">
-                <div class="font-semibold text-surface-900 dark:text-surface-0 mb-2">Sync Report</div>
-                <div class="flex justify-between"><span class="text-surface-500">Cities created</span><span class="font-medium">{{ lastReport()!.report.cities_created }}</span></div>
-                <div class="flex justify-between"><span class="text-surface-500">Cities updated</span><span class="font-medium">{{ lastReport()!.report.cities_updated }}</span></div>
-                <div class="flex justify-between"><span class="text-surface-500">Totems created</span><span class="font-medium">{{ lastReport()!.report.totems_created }}</span></div>
-                <div class="flex justify-between"><span class="text-surface-500">Totems updated</span><span class="font-medium">{{ lastReport()!.report.totems_updated }}</span></div>
+              <div class="flex items-center gap-2 text-sm">
+                <span class="w-2 h-2 rounded-full bg-orange-400"></span>
+                <span class="text-surface-500">Never synced — click Sync Now to import locations</span>
               </div>
             }
           </div>
+
+          <!-- Last report (if just synced) -->
+          @if (lastReport()) {
+            <div class="border-t border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800 p-4">
+              <div class="flex items-center gap-2 mb-3">
+                <i class="pi pi-check-circle text-green-600 text-sm"></i>
+                <span class="text-sm font-medium text-surface-900 dark:text-surface-0">Sync completed</span>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="flex items-center gap-2 text-xs">
+                  <span class="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 font-bold text-sm">{{ lastReport()!.report.cities_created }}</span>
+                  <span class="text-surface-500">cities created</span>
+                </div>
+                <div class="flex items-center gap-2 text-xs">
+                  <span class="w-8 h-8 rounded-lg bg-surface-100 dark:bg-surface-700 flex items-center justify-center text-surface-600 font-bold text-sm">{{ lastReport()!.report.cities_updated }}</span>
+                  <span class="text-surface-500">cities updated</span>
+                </div>
+                <div class="flex items-center gap-2 text-xs">
+                  <span class="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/20 flex items-center justify-center text-green-600 font-bold text-sm">{{ lastReport()!.report.totems_created }}</span>
+                  <span class="text-surface-500">totems created</span>
+                </div>
+                <div class="flex items-center gap-2 text-xs">
+                  <span class="w-8 h-8 rounded-lg bg-surface-100 dark:bg-surface-700 flex items-center justify-center text-surface-600 font-bold text-sm">{{ lastReport()!.report.totems_updated }}</span>
+                  <span class="text-surface-500">totems updated</span>
+                </div>
+              </div>
+            </div>
+          }
         </div>
 
         <!-- Quick Links -->
