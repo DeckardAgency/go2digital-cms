@@ -169,8 +169,8 @@ import { environment } from '../../../../environments/environment';
                   <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Status</label>
                   <p-select [options]="statusOptions" [(ngModel)]="status" optionLabel="label" optionValue="value" class="w-full" />
                 </div>
-                <div class="flex items-center gap-2 pt-6">
-                  <label class="text-sm font-medium text-surface-700 dark:text-surface-300 whitespace-nowrap">Featured</label>
+                <div class="flex flex-col gap-2 pt-0">
+                  <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Featured</label>
                   <p-toggleswitch [(ngModel)]="featured" />
                 </div>
               </div>
