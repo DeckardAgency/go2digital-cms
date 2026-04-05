@@ -40,11 +40,14 @@ interface FeaturedLabsConfig {
     <div class="space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">Featured Labs</h1>
+        <div class="flex items-center gap-3">
+          <p-button icon="pi pi-arrow-left" severity="secondary" [text]="true" [rounded]="true" (onClick)="router.navigate(['/homepage'])" />
+          <div>
+            <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">Featured Labs</h1>
           <p class="text-surface-500 dark:text-surface-400 mt-1">
             Configure which lab projects appear in the Featured Labs section on the homepage
           </p>
+          </div>
         </div>
         <p-button
           label="Save"

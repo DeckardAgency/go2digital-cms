@@ -31,10 +31,14 @@ import { HomepageService } from '../../../core/services/homepage.service';
             icon="pi pi-arrow-left"
             severity="secondary"
             [text]="true"
+            [rounded]="true"
             (onClick)="router.navigate(['/homepage/why-cards'])" />
-          <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">
-            {{ isEditMode() ? 'Edit Why Card' : 'New Why Card' }}
-          </h1>
+          <div>
+            <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">
+              {{ isEditMode() ? 'Edit Why Card' : 'New Why Card' }}
+            </h1>
+            <p class="text-surface-500 dark:text-surface-400 text-sm mt-0.5">Info card in the Why Go2Digital section</p>
+          </div>
         </div>
         <p-button
           label="Save"
