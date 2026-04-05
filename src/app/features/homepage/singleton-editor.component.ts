@@ -1,6 +1,7 @@
 import { Component, Input, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { CheckboxModule } from 'primeng/checkbox';
@@ -35,58 +36,98 @@ export interface SingletonNonTranslatableField {
     TranslationEditorComponent,
   ],
   template: `
-    <div class="max-w-4xl">
+    <div class="space-y-6">
       <!-- Header -->
-      <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">
-          {{ pageTitle }}
-        </h1>
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <p-button
+            icon="pi pi-arrow-left"
+            severity="secondary"
+            [text]="true"
+            [rounded]="true"
+            (onClick)="navigateBack()" />
+          <div>
+            <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0">{{ pageTitle }}</h1>
+            @if (subtitle) {
+              <p class="text-surface-500 dark:text-surface-400 text-sm mt-0.5">{{ subtitle }}</p>
+            }
+          </div>
+        </div>
         <p-button
           label="Save"
-          icon="pi pi-check"
+          icon="pi pi-save"
           [loading]="homepageService.isLoading()"
           (onClick)="onSave()" />
       </div>
 
-      <!-- Translations -->
-      <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-5 mb-5">
-        <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Content</h2>
-        <app-translation-editor
-          [translations]="translations()"
-          [fields]="translatableFields"
-          (translationsChange)="translations.set($event)" />
-      </div>
+      <!-- Two-column layout -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left 2/3 -->
+        <div class="lg:col-span-2 space-y-6">
+          <!-- Content Card -->
+          <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+            <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-5">Content</h2>
+            <app-translation-editor
+              [translations]="translations()"
+              [fields]="translatableFields"
+              (translationsChange)="translations.set($event)" />
+          </div>
 
-      <!-- Non-translatable Fields -->
-      @if (nonTranslatableFields?.length) {
-        <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-5 mb-5">
-          <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Settings</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            @for (field of nonTranslatableFields; track field.key) {
-              @switch (field.type) {
-                @case ('text') {
-                  <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-surface-700 dark:text-surface-300">{{ field.label }}</label>
-                    <input pInputText class="w-full" [(ngModel)]="nonTranslatableValues[field.key]" />
-                  </div>
+          <!-- Non-translatable Fields -->
+          @if (nonTranslatableFields?.length) {
+            <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+              <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-5">Settings</h2>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                @for (field of nonTranslatableFields; track field.key) {
+                  @switch (field.type) {
+                    @case ('text') {
+                      <div class="flex flex-col gap-2">
+                        <label class="text-sm font-medium text-surface-700 dark:text-surface-300">{{ field.label }}</label>
+                        <input pInputText class="w-full" [(ngModel)]="nonTranslatableValues[field.key]" />
+                      </div>
+                    }
+                    @case ('number') {
+                      <div class="flex flex-col gap-2">
+                        <label class="text-sm font-medium text-surface-700 dark:text-surface-300">{{ field.label }}</label>
+                        <p-inputNumber class="w-full" [(ngModel)]="nonTranslatableValues[field.key]" [useGrouping]="false" />
+                      </div>
+                    }
+                    @case ('checkbox') {
+                      <div class="flex items-end gap-2 pb-2">
+                        <p-checkbox [(ngModel)]="nonTranslatableValues[field.key]" [binary]="true" [inputId]="field.key" />
+                        <label [for]="field.key" class="text-sm font-medium text-surface-700 dark:text-surface-300">{{ field.label }}</label>
+                      </div>
+                    }
+                  }
                 }
-                @case ('number') {
-                  <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-surface-700 dark:text-surface-300">{{ field.label }}</label>
-                    <p-inputNumber class="w-full" [(ngModel)]="nonTranslatableValues[field.key]" [useGrouping]="false" />
-                  </div>
-                }
-                @case ('checkbox') {
-                  <div class="flex items-end gap-2 pb-2">
-                    <p-checkbox [(ngModel)]="nonTranslatableValues[field.key]" [binary]="true" [inputId]="field.key" />
-                    <label [for]="field.key" class="text-sm font-medium text-surface-700 dark:text-surface-300">{{ field.label }}</label>
-                  </div>
-                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Right 1/3 -->
+        <div class="space-y-6">
+          <!-- Preview (projected content) -->
+          <ng-content select="[preview]"></ng-content>
+
+          <!-- Section Info -->
+          <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+            <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Info</h2>
+            <div class="flex flex-col gap-3 text-sm">
+              @if (sectionPosition > 0) {
+                <div class="flex justify-between">
+                  <span class="text-surface-500">Position</span>
+                  <span class="font-medium text-surface-900 dark:text-surface-0">#{{ sectionPosition }} on homepage</span>
+                </div>
               }
-            }
+              <div class="flex justify-between">
+                <span class="text-surface-500">Type</span>
+                <span class="font-medium text-surface-900 dark:text-surface-0">Singleton</span>
+              </div>
+            </div>
           </div>
         </div>
-      }
+      </div>
     </div>
   `,
 })
@@ -95,9 +136,13 @@ export class SingletonEditorComponent implements OnInit {
   @Input({ required: true }) pageTitle!: string;
   @Input({ required: true }) translatableFields!: SingletonTranslatableField[];
   @Input() nonTranslatableFields?: SingletonNonTranslatableField[];
+  @Input() subtitle: string = '';
+  @Input() sectionPosition: number = 0;
+  @Input() backRoute: string = '/homepage';
 
   readonly homepageService = inject(HomepageService);
   private readonly messageService = inject(MessageService);
+  private readonly router = inject(Router);
 
   translations = signal<{ hr: Record<string, any>; en: Record<string, any> }>({
     hr: {},
@@ -105,6 +150,10 @@ export class SingletonEditorComponent implements OnInit {
   });
 
   nonTranslatableValues: Record<string, any> = {};
+
+  navigateBack(): void {
+    this.router.navigate([this.backRoute]);
+  }
 
   ngOnInit(): void {
     this.initEmptyTranslations();
