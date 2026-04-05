@@ -142,58 +142,60 @@ import { environment } from '../../../environments/environment';
           <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
             <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Preview</h2>
             <!-- Mini hero mockup matching go2digital.hr layout -->
-            <div class="rounded-lg bg-white overflow-hidden border border-surface-200 dark:border-surface-700" style="aspect-ratio: 16/10;">
-              <div class="h-full flex flex-col">
-                <!-- Top: Logo + Video area -->
-                <div class="flex-1 flex">
-                  <!-- Left: Logo -->
-                  <div class="w-1/3 p-3 flex flex-col">
-                    <div class="text-[9px] font-bold tracking-wider text-zinc-900">
-                      GO <span class="inline-flex items-center justify-center w-3 h-3 rounded-full border border-green-500 text-[6px] text-green-500">2</span> DIGITAL
+            <div class="rounded-lg bg-white overflow-hidden border border-surface-200 dark:border-surface-700" style="aspect-ratio: 3/2;">
+              <div class="h-full flex flex-col relative">
+                <!-- Top half: Logo (left) + Video (right) -->
+                <div class="flex" style="height: 60%;">
+                  <!-- Left: Logo area -->
+                  <div class="w-[38%] p-2 pt-2">
+                    <div class="flex items-center gap-0.5" style="font-size: 6px; font-weight: 700; letter-spacing: 0.05em; color: #18181b;">
+                      GO <span class="inline-flex items-center justify-center rounded-full border text-green-500" style="width: 8px; height: 8px; font-size: 4px; border-color: #22c55e;">2</span> DIGITAL
                     </div>
                   </div>
-                  <!-- Right: Video placeholder -->
-                  <div class="w-2/3 p-2 pt-3 pr-3">
-                    <div class="w-full h-full rounded-lg bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center overflow-hidden">
+                  <!-- Right: Video window -->
+                  <div class="w-[62%] p-1.5 pt-1.5 pr-2">
+                    <div class="w-full h-full rounded overflow-hidden bg-zinc-200">
                       @if (desktopVideoUrl()) {
                         <video class="w-full h-full object-cover" [src]="desktopVideoUrl()" muted autoplay loop playsinline></video>
                       } @else {
-                        <i class="pi pi-video text-zinc-400 text-lg"></i>
+                        <div class="w-full h-full flex items-center justify-center">
+                          <i class="pi pi-video text-zinc-400" style="font-size: 10px;"></i>
+                        </div>
                       }
                     </div>
                   </div>
                 </div>
-                <!-- Bottom: Content area (3 columns like real hero) -->
-                <div class="flex items-end px-3 pb-3 gap-2" style="height: 45%;">
-                  <!-- Left: Title -->
-                  <div class="w-2/5">
-                    <p class="text-zinc-900 font-light leading-none" style="font-size: 13px; letter-spacing: -0.02em;">
+                <!-- Bottom half: Title (left) + Content (middle) + Scroll (right) -->
+                <div class="flex items-end px-2 pb-2 gap-1" style="height: 40%;">
+                  <!-- Left: Big title -->
+                  <div class="w-[38%]">
+                    <p class="text-zinc-900 leading-none" style="font-size: 10px; font-weight: 300; letter-spacing: -0.03em;">
                       {{ translations().hr['titleLine1'] || 'Title' }}<br/>{{ translations().hr['titleLine2'] || 'Line 2' }}
                     </p>
                   </div>
                   <!-- Middle: Kicker + Heading + Description -->
-                  <div class="w-2/5 space-y-1">
-                    <p class="flex items-center gap-1 text-zinc-600" style="font-size: 7px;">
-                      <span class="w-1 h-1 bg-zinc-400 rounded-full"></span>
+                  <div class="w-[48%]">
+                    <p class="flex items-center gap-0.5 text-zinc-500 mb-0.5" style="font-size: 5px;">
+                      <span class="rounded-full bg-zinc-400" style="width: 2px; height: 2px;"></span>
                       {{ translations().hr['kicker'] || 'Kicker' }}
                     </p>
-                    <p class="text-zinc-900 leading-tight" style="font-size: 8px; font-weight: 500;">
+                    <p class="text-zinc-900 leading-snug" style="font-size: 5.5px; font-weight: 500;">
                       {{ translations().hr['heading'] || 'Heading' }}
                     </p>
-                    <p class="text-zinc-500 leading-tight" style="font-size: 6px;">
+                    <p class="text-zinc-400 leading-snug mt-0.5" style="font-size: 4.5px;">
                       {{ translations().hr['description'] || 'Description' }}
                     </p>
                   </div>
                   <!-- Right: Scroll label -->
-                  <div class="w-1/5 text-right">
-                    <p class="text-zinc-400" style="font-size: 6px;">
+                  <div class="w-[14%] text-right">
+                    <p class="text-zinc-400" style="font-size: 4.5px;">
                       {{ translations().hr['scrollDownLabel'] || 'Scroll' }}
                     </p>
                   </div>
                 </div>
               </div>
             </div>
-            <p class="text-[10px] text-surface-400 mt-3 text-center">Approximate layout — Croatian content</p>
+            <p class="text-[10px] text-surface-400 mt-3 text-center">Approximate layout — Croatian</p>
           </div>
 
           <!-- Section Info -->
