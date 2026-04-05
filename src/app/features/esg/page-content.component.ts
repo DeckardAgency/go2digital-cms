@@ -6,7 +6,7 @@ import { ButtonModule } from 'primeng/button';
 import { MessageService } from 'primeng/api';
 
 import { TranslationEditorComponent } from '../../shared/components/translation-editor/translation-editor.component';
-import { SeoEditorComponent } from '../../shared/components/seo-editor/seo-editor.component';
+import { SeoEditorComponent, SeoContentContext } from '../../shared/components/seo-editor/seo-editor.component';
 import { EsgService } from '../../core/services/esg.service';
 
 @Component({
@@ -43,7 +43,7 @@ import { EsgService } from '../../core/services/esg.service';
           (translationsChange)="translations.set($event)" />
       </div>
 
-      <app-seo-editor singletonType="esg-page" />
+      <app-seo-editor singletonType="esg-page" [contentContext]="getSeoContentContext()" />
     </div>
   `,
 })
@@ -84,6 +84,17 @@ export class EsgPageContentComponent implements OnInit {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load data' });
       },
     });
+  }
+
+  getSeoContentContext(): SeoContentContext {
+    const t = this.translations();
+    return {
+      entityType: 'esg-page',
+      content: {
+        hr: { heroLabel: t.hr['heroLabel'] || '', introSmall: t.hr['introSmall'] || '', introLarge: t.hr['introLarge'] || '' },
+        en: { heroLabel: t.en['heroLabel'] || '', introSmall: t.en['introSmall'] || '', introLarge: t.en['introLarge'] || '' },
+      },
+    };
   }
 
   onSave(): void {

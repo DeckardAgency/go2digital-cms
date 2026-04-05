@@ -8,7 +8,7 @@ import { ButtonModule } from 'primeng/button';
 import { MessageService } from 'primeng/api';
 
 import { TranslationEditorComponent } from '../../shared/components/translation-editor/translation-editor.component';
-import { SeoEditorComponent } from '../../shared/components/seo-editor/seo-editor.component';
+import { SeoEditorComponent, SeoContentContext } from '../../shared/components/seo-editor/seo-editor.component';
 import { PageService } from '../../core/services/page.service';
 
 @Component({
@@ -61,7 +61,7 @@ import { PageService } from '../../core/services/page.service';
       </div>
 
       @if (isEditMode()) {
-        <app-seo-editor entityType="pages" [entityId]="itemId()!" />
+        <app-seo-editor entityType="pages" [entityId]="itemId()!" [contentContext]="getSeoContentContext()" />
       }
 
       <!-- Meta Fields -->
@@ -140,6 +140,17 @@ export class PageFormComponent implements OnInit {
         this.router.navigate(['/pages']);
       },
     });
+  }
+
+  getSeoContentContext(): SeoContentContext {
+    const t = this.translations();
+    return {
+      entityType: 'page',
+      content: {
+        hr: { title: t.hr['title'] || '', body: t.hr['body'] || '' },
+        en: { title: t.en['title'] || '', body: t.en['body'] || '' },
+      },
+    };
   }
 
   onSave(): void {

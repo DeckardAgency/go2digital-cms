@@ -14,7 +14,7 @@ import { TranslationEditorComponent } from '../../../shared/components/translati
 import { ImageUploadComponent } from '../../../shared/components/image-upload/image-upload.component';
 import { BlogService } from '../../../core/services/blog.service';
 import { FocalPointPickerComponent } from '../../../shared/components/focal-point-picker/focal-point-picker.component';
-import { SeoEditorComponent } from '../../../shared/components/seo-editor/seo-editor.component';
+import { SeoEditorComponent, SeoContentContext } from '../../../shared/components/seo-editor/seo-editor.component';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -79,7 +79,7 @@ import { environment } from '../../../../environments/environment';
           </div>
 
           @if (isEditMode()) {
-            <app-seo-editor entityType="blog-posts" [entityId]="postId()!" />
+            <app-seo-editor entityType="blog-posts" [entityId]="postId()!" [contentContext]="getSeoContentContext()" />
           }
 
         </div>
@@ -383,6 +383,17 @@ export class BlogPostFormComponent implements OnInit {
     if (!path) return '';
     if (path.startsWith('http')) return path;
     return environment.apiUrl.replace('/api', '') + path;
+  }
+
+  getSeoContentContext(): SeoContentContext {
+    const t = this.translations();
+    return {
+      entityType: 'blog-post',
+      content: {
+        hr: { title: t.hr['title'] || '', excerpt: t.hr['excerpt'] || '', body: t.hr['body'] || '' },
+        en: { title: t.en['title'] || '', excerpt: t.en['excerpt'] || '', body: t.en['body'] || '' },
+      },
+    };
   }
 
   onSave(): void {

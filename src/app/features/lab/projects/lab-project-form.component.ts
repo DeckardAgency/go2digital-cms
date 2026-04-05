@@ -12,7 +12,7 @@ import { MessageService } from 'primeng/api';
 import { TranslationEditorComponent } from '../../../shared/components/translation-editor/translation-editor.component';
 import { ImageUploadComponent } from '../../../shared/components/image-upload/image-upload.component';
 import { FocalPointPickerComponent } from '../../../shared/components/focal-point-picker/focal-point-picker.component';
-import { SeoEditorComponent } from '../../../shared/components/seo-editor/seo-editor.component';
+import { SeoEditorComponent, SeoContentContext } from '../../../shared/components/seo-editor/seo-editor.component';
 import { LabService } from '../../../core/services/lab.service';
 import { LabCategory } from '../../../core/models/lab.model';
 import { environment } from '../../../../environments/environment';
@@ -76,7 +76,7 @@ import { environment } from '../../../../environments/environment';
           </div>
 
           @if (isEditMode()) {
-            <app-seo-editor entityType="lab-projects" [entityId]="projectId()!" />
+            <app-seo-editor entityType="lab-projects" [entityId]="projectId()!" [contentContext]="getSeoContentContext()" />
           }
         </div>
 
@@ -362,6 +362,17 @@ export class LabProjectFormComponent implements OnInit {
     if (!path) return '';
     if (path.startsWith('http')) return path;
     return environment.apiUrl.replace('/api', '') + path;
+  }
+
+  getSeoContentContext(): SeoContentContext {
+    const t = this.translations();
+    return {
+      entityType: 'lab-project',
+      content: {
+        hr: { title: t.hr['title'] || '', shortTitle: t.hr['shortTitle'] || '', subtitle: t.hr['subtitle'] || '', body: t.hr['body'] || '' },
+        en: { title: t.en['title'] || '', shortTitle: t.en['shortTitle'] || '', subtitle: t.en['subtitle'] || '', body: t.en['body'] || '' },
+      },
+    };
   }
 
   onSave(): void {

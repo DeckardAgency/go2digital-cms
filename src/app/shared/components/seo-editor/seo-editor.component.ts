@@ -14,11 +14,18 @@ import { TabList } from 'primeng/tabs';
 import { Tab } from 'primeng/tabs';
 import { TabPanels } from 'primeng/tabs';
 import { TabPanel } from 'primeng/tabs';
+import { ProgressBarModule } from 'primeng/progressbar';
 import { environment } from '../../../../environments/environment';
 
 interface SeoLocale {
   code: string;
   label: string;
+}
+
+/** Content context passed by parent for AI generation */
+export interface SeoContentContext {
+  entityType: string; // 'blog-post', 'lab-project', 'page', 'totem', 'esg-page', etc.
+  content: Record<string, Record<string, string>>; // { hr: { title: '...', body: '...' }, en: { ... } }
 }
 
 @Component({
@@ -27,7 +34,7 @@ interface SeoLocale {
   imports: [
     CommonModule, FormsModule, InputTextModule, TextareaModule,
     SelectModule, ToggleSwitchModule, ButtonModule, TagModule,
-    Tabs, TabList, Tab, TabPanels, TabPanel,
+    Tabs, TabList, Tab, TabPanels, TabPanel, ProgressBarModule,
   ],
   template: `
     <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 overflow-hidden">
@@ -43,9 +50,32 @@ interface SeoLocale {
           } @else {
             <p-tag value="Not set" severity="secondary" />
           }
+          @if (contentContext) {
+            <p-button
+              label="Generate with AI"
+              icon="pi pi-sparkles"
+              size="small"
+              severity="help"
+              [outlined]="true"
+              [loading]="generating()"
+              (onClick)="generateWithAi()" />
+          }
           <p-button label="Save SEO" icon="pi pi-save" size="small" [loading]="saving()" (onClick)="save()" />
         </div>
       </div>
+
+      <!-- AI Generation Progress -->
+      @if (generating()) {
+        <div class="px-6 pt-4">
+          <div class="flex items-center gap-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+            <i class="pi pi-sparkles text-purple-500 animate-pulse"></i>
+            <div class="flex-1">
+              <div class="text-sm font-medium text-purple-700 dark:text-purple-300">Generating SEO with AI...</div>
+              <div class="text-xs text-purple-500 dark:text-purple-400 mt-0.5">Analyzing content and creating optimized metadata for all languages</div>
+            </div>
+          </div>
+        </div>
+      }
 
       <div class="p-6">
         <!-- Google Preview -->
@@ -94,7 +124,9 @@ interface SeoLocale {
                   <div class="flex flex-col gap-2">
                     <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Title</label>
                     <input pInputText class="w-full" [(ngModel)]="getTranslation(activeLocale.code).title" [placeholder]="activeLocale.code === 'hr' ? 'Naslov stranice' : 'Page title'" />
-                    <span class="text-xs text-surface-400">{{ (getTranslation(activeLocale.code).title || '').length }}/60 characters</span>
+                    <span class="text-xs" [class]="(getTranslation(activeLocale.code).title || '').length > 60 ? 'text-orange-500' : 'text-surface-400'">
+                      {{ (getTranslation(activeLocale.code).title || '').length }}/60 characters
+                    </span>
                   </div>
                   <div class="flex flex-col gap-2">
                     <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Description</label>
@@ -216,6 +248,7 @@ export class SeoEditorComponent implements OnInit, OnChanges {
   @Input() entityId = '';
   @Input() singletonType = '';
   @Input() siteName = 'Go2Digital';
+  @Input() contentContext: SeoContentContext | null = null;
 
   /** Supported locales — add more here when needed */
   @Input() locales: SeoLocale[] = [
@@ -229,6 +262,7 @@ export class SeoEditorComponent implements OnInit, OnChanges {
 
   hasData = signal(false);
   saving = signal(false);
+  generating = signal(false);
   activeLocale: SeoLocale = { code: 'hr', label: 'Hrvatski' };
 
   seo: any = {
@@ -307,6 +341,55 @@ export class SeoEditorComponent implements OnInit, OnChanges {
         this.seo.noIndex = data.noIndex || false;
         this.seo.noFollow = data.noFollow || false;
       }
+    });
+  }
+
+  generateWithAi(): void {
+    if (!this.contentContext) return;
+
+    this.generating.set(true);
+
+    const payload = {
+      entityType: this.contentContext.entityType,
+      locales: this.locales.map(l => ({ code: l.code, label: l.label })),
+      content: this.contentContext.content,
+      siteName: this.siteName,
+    };
+
+    this.http.post<any>(`${this.apiUrl}/seo/generate`, payload).subscribe({
+      next: (result) => {
+        // Fill in translations from AI response
+        if (result.translations) {
+          for (const loc of this.locales) {
+            const generated = result.translations[loc.code];
+            if (generated) {
+              this.seo.translations[loc.code] = {
+                ...this.emptyTranslation(),
+                ...generated,
+              };
+            }
+          }
+        }
+        // Set ogType if provided
+        if (result.ogType) {
+          this.seo.ogType = result.ogType;
+        }
+
+        this.generating.set(false);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'SEO Generated',
+          detail: 'AI has filled all SEO fields. Review and save when ready.',
+        });
+      },
+      error: (err) => {
+        this.generating.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'AI Generation Failed',
+          detail: err.error?.error || 'Could not generate SEO data.',
+        });
+      },
     });
   }
 

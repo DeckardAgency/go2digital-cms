@@ -12,7 +12,7 @@ import { ButtonModule } from 'primeng/button';
 import { MessageService } from 'primeng/api';
 
 import { LocationService, TotemDetail } from '../../../core/services/location.service';
-import { SeoEditorComponent } from '../../../shared/components/seo-editor/seo-editor.component';
+import { SeoEditorComponent, SeoContentContext } from '../../../shared/components/seo-editor/seo-editor.component';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -113,7 +113,7 @@ import { environment } from '../../../../environments/environment';
             </div>
           </div>
 
-          <app-seo-editor entityType="totems" [entityId]="totemId()!" />
+          <app-seo-editor entityType="totems" [entityId]="totemId()!" [contentContext]="getSeoContentContext()" />
 
         </div>
 
@@ -309,6 +309,16 @@ export class TotemFormComponent implements OnInit {
         this.router.navigate(['/locations/totems']);
       },
     });
+  }
+
+  getSeoContentContext(): SeoContentContext {
+    return {
+      entityType: 'totem',
+      content: {
+        hr: { name: this.name, description: this.description },
+        en: { name: this.nameEn, description: this.descriptionEn },
+      },
+    };
   }
 
   onSave(): void {
