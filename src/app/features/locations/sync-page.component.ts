@@ -206,6 +206,18 @@ export class SyncPageComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadSyncStatus();
+    this.loadLastReport();
+  }
+
+  private loadLastReport(): void {
+    this.locationService.getSyncLogs().subscribe({
+      next: (logs) => {
+        const last = logs.find(l => l.success);
+        if (last) {
+          this.lastReport.set({ success: true, report: last.report, syncedAt: last.createdAt });
+        }
+      }
+    });
   }
 
   loadSyncStatus(): void {
