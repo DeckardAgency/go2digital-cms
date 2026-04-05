@@ -1,6 +1,7 @@
 import { Component, Input, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
@@ -9,7 +10,9 @@ import { ButtonModule } from 'primeng/button';
 import { MessageService } from 'primeng/api';
 
 import { TranslationEditorComponent } from '../../shared/components/translation-editor/translation-editor.component';
+import { ImageUploadComponent } from '../../shared/components/image-upload/image-upload.component';
 import { HomepageService } from '../../core/services/homepage.service';
+import { environment } from '../../../environments/environment';
 
 export interface SingletonTranslatableField {
   key: string;
@@ -34,6 +37,7 @@ export interface SingletonNonTranslatableField {
     CheckboxModule,
     ButtonModule,
     TranslationEditorComponent,
+    ImageUploadComponent,
   ],
   template: `
     <div class="space-y-6">
@@ -107,6 +111,18 @@ export interface SingletonNonTranslatableField {
 
         <!-- Right 1/3 -->
         <div class="space-y-6">
+          <!-- Image upload (if imageField is set) -->
+          @if (imageField) {
+            <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+              <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Image</h2>
+              <app-image-upload
+                [currentImageUrl]="imageUrl()"
+                [uploading]="uploadingImage()"
+                (onUpload)="onImageUpload($event)"
+                (onRemove)="onImageRemove()" />
+            </div>
+          }
+
           <!-- Preview (projected content) -->
           <ng-content select="[preview]"></ng-content>
 
@@ -139,10 +155,15 @@ export class SingletonEditorComponent implements OnInit {
   @Input() subtitle: string = '';
   @Input() sectionPosition: number = 0;
   @Input() backRoute: string = '/homepage';
+  @Input() imageField: string = '';
 
   readonly homepageService = inject(HomepageService);
   private readonly messageService = inject(MessageService);
   private readonly router = inject(Router);
+  private readonly http = inject(HttpClient);
+
+  imageUrl = signal('');
+  uploadingImage = signal(false);
 
   translations = signal<{ hr: Record<string, any>; en: Record<string, any> }>({
     hr: {},
@@ -188,10 +209,45 @@ export class SingletonEditorComponent implements OnInit {
             this.nonTranslatableValues[field.key] = data[field.key] ?? '';
           }
         }
+
+        // Resolve image
+        if (this.imageField && data[this.imageField]) {
+          const img = data[this.imageField];
+          if (typeof img === 'object' && img.path) {
+            this.imageUrl.set(environment.apiUrl.replace('/api', '') + '/storage/media/' + img.path);
+          }
+        }
       },
       error: () => {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load data' });
       },
+    });
+  }
+
+  onImageUpload(file: File): void {
+    this.uploadingImage.set(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    this.http.post<any>(`${environment.apiUrl}/singletons/${this.singletonType}/media/${this.imageField}`, formData).subscribe({
+      next: (res) => {
+        this.uploadingImage.set(false);
+        this.imageUrl.set(environment.apiUrl.replace('/api', '') + res.url);
+        this.messageService.add({ severity: 'success', summary: 'Image uploaded' });
+      },
+      error: () => {
+        this.uploadingImage.set(false);
+        this.messageService.add({ severity: 'error', summary: 'Failed to upload image' });
+      },
+    });
+  }
+
+  onImageRemove(): void {
+    this.http.delete(`${environment.apiUrl}/singletons/${this.singletonType}/media/${this.imageField}`).subscribe({
+      next: () => {
+        this.imageUrl.set('');
+        this.messageService.add({ severity: 'info', summary: 'Image removed' });
+      },
+      error: () => this.messageService.add({ severity: 'error', summary: 'Failed to remove image' }),
     });
   }
 

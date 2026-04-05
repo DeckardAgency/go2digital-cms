@@ -12,7 +12,8 @@ import { SingletonEditorComponent, SingletonTranslatableField, SingletonNonTrans
       subtitle="Call-to-action with title, description, and button"
       [sectionPosition]="9"
       [translatableFields]="fields"
-      [nonTranslatableFields]="nonTranslatable">
+      [nonTranslatableFields]="nonTranslatable"
+      imageField="image">
       <div preview>
         <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
           <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Preview</h2>
