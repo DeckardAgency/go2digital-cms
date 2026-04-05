@@ -370,7 +370,7 @@ import { AuthService } from '../../core/services/auth.service';
               [paginator]="allSettings().length > 20"
               [rows]="20"
               styleClass="p-datatable-sm">
-              <ng-template #header>
+              <ng-template pTemplate="header">
                 <tr>
                   <th>Key</th>
                   <th>Group</th>
@@ -378,7 +378,7 @@ import { AuthService } from '../../core/services/auth.service';
                   <th class="w-24">Actions</th>
                 </tr>
               </ng-template>
-              <ng-template #body let-item>
+              <ng-template pTemplate="body" let-item>
                 <tr (click)="openEditDialog(item)" class="cursor-pointer">
                   <td><span class="font-medium text-surface-900 dark:text-surface-100">{{ item.key }}</span></td>
                   <td><span class="text-surface-600 dark:text-surface-400">{{ item.group }}</span></td>
@@ -388,7 +388,7 @@ import { AuthService } from '../../core/services/auth.service';
                   </td>
                 </tr>
               </ng-template>
-              <ng-template #emptymessage>
+              <ng-template pTemplate="emptymessage">
                 <tr>
                   <td colspan="4" class="text-center py-8 text-surface-400">
                     <i class="pi pi-cog text-3xl mb-2 block"></i>
