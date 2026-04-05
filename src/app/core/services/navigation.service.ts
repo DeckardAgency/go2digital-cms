@@ -95,6 +95,17 @@ export class NavigationService {
       ]
     },
     {
+      id: 'locations',
+      label: 'Locations',
+      icon: 'pi pi-map-marker',
+      route: '/locations',
+      children: [
+        { id: 'loc-sync', label: 'Sync & Overview', icon: 'pi pi-sync', route: '/locations' },
+        { id: 'loc-cities', label: 'Cities', icon: 'pi pi-building', route: '/locations/cities' },
+        { id: 'loc-totems', label: 'Totems', icon: 'pi pi-map', route: '/locations/totems' },
+      ]
+    },
+    {
       id: 'media',
       label: 'Media',
       icon: 'pi pi-image',

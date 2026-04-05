@@ -71,6 +71,11 @@ export const routes: Routes = [
       { path: 'esg/badges', loadComponent: () => import('./features/esg/badges/badge-list.component').then(m => m.BadgeListComponent) },
       { path: 'esg/badges/new', loadComponent: () => import('./features/esg/badges/badge-form.component').then(m => m.BadgeFormComponent) },
       { path: 'esg/badges/:id', loadComponent: () => import('./features/esg/badges/badge-form.component').then(m => m.BadgeFormComponent) },
+      // Locations
+      { path: 'locations', loadComponent: () => import('./features/locations/sync-page.component').then(m => m.SyncPageComponent) },
+      { path: 'locations/cities', loadComponent: () => import('./features/locations/cities/city-list.component').then(m => m.CityListComponent) },
+      { path: 'locations/totems', loadComponent: () => import('./features/locations/totems/totem-list.component').then(m => m.TotemListComponent) },
+      { path: 'locations/totems/:id', loadComponent: () => import('./features/locations/totems/totem-form.component').then(m => m.TotemFormComponent) },
       // Pages
       { path: 'pages', loadComponent: () => import('./features/pages/page-list.component').then(m => m.PageListComponent) },
       { path: 'pages/new', loadComponent: () => import('./features/pages/page-form.component').then(m => m.PageFormComponent) },
