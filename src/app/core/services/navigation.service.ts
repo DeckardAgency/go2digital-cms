@@ -15,6 +15,7 @@ export interface NavItem {
   label: string;
   icon: string;
   route: string;
+  requiredRole?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -121,6 +122,7 @@ export class NavigationService {
       icon: 'pi pi-sliders-h',
       route: '/settings/general',
       children: [
+        { id: 'settings-users', label: 'Users', icon: 'pi pi-users', route: '/users', requiredRole: 'ROLE_SUPER_ADMIN' },
         { id: 'settings-general', label: 'General', icon: 'pi pi-cog', route: '/settings/general' },
         { id: 'settings-integrations', label: 'Integrations', icon: 'pi pi-link', route: '/settings/integrations' },
         { id: 'settings-seo', label: 'SEO', icon: 'pi pi-search', route: '/settings/seo' },

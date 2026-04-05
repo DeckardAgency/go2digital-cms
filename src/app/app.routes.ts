@@ -92,6 +92,8 @@ export const routes: Routes = [
       { path: 'media', loadComponent: () => import('./features/media/media-page.component').then(m => m.MediaPageComponent) },
       // Files
       { path: 'files', loadComponent: () => import('./features/files/files-page.component').then(m => m.FilesPageComponent) },
+      // Users
+      { path: 'users', loadComponent: () => import('./features/users/user-list.component').then(m => m.UserListComponent) },
       // Settings
       { path: 'settings', redirectTo: 'settings/general', pathMatch: 'full' },
       { path: 'settings/:section', loadComponent: () => import('./features/settings/settings-page.component').then(m => m.SettingsPageComponent) },

@@ -75,6 +75,14 @@ export class SidebarComponent {
     }
   }
 
+  getVisibleItems(module: NavModule): NavItem[] {
+    const roles = this.authService.user()?.roles || [];
+    return module.children.filter(item => {
+      if (!item.requiredRole) return true;
+      return roles.includes(item.requiredRole);
+    });
+  }
+
   toggleCollapsed(): void {
     this.layoutService.toggleSidebar();
   }
