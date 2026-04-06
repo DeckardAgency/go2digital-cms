@@ -96,6 +96,11 @@ interface FeaturedLabsConfig {
                 <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Button Text</label>
                 <input pInputText class="w-full" [(ngModel)]="sectionText[activeTextLocale].buttonText" />
               </div>
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Button URL</label>
+                <input pInputText class="w-full" [(ngModel)]="buttonUrl" placeholder="/lab" />
+                <span class="text-xs text-surface-400">Same for all languages</span>
+              </div>
             </div>
           </div>
         </div>
@@ -247,6 +252,7 @@ export class FeaturedLabsConfigComponent implements OnInit {
     hr: { label: '', title: '', description: '', buttonText: '' },
     en: { label: '', title: '', description: '', buttonText: '' },
   };
+  buttonUrl = '/lab';
   private settingsMap: Record<string, Setting> = {};
 
   ngOnInit(): void {
@@ -312,7 +318,7 @@ export class FeaturedLabsConfigComponent implements OnInit {
   }
 
   loadSectionText(): void {
-    const textKeys = ['homepage.featuredLabs.label', 'homepage.featuredLabs.title', 'homepage.featuredLabs.description', 'homepage.featuredLabs.buttonText'];
+    const textKeys = ['homepage.featuredLabs.label', 'homepage.featuredLabs.title', 'homepage.featuredLabs.description', 'homepage.featuredLabs.buttonText', 'homepage.featuredLabs.buttonUrl'];
     const fieldMap: Record<string, string> = {
       'homepage.featuredLabs.label': 'label',
       'homepage.featuredLabs.title': 'title',
@@ -325,9 +331,13 @@ export class FeaturedLabsConfigComponent implements OnInit {
         for (const s of settings) {
           if (textKeys.includes(s.key)) {
             this.settingsMap[s.key] = s;
-            const field = fieldMap[s.key];
-            if (s.value?.hr !== undefined) this.sectionText['hr'][field as keyof typeof this.sectionText['hr']] = s.value.hr;
-            if (s.value?.en !== undefined) this.sectionText['en'][field as keyof typeof this.sectionText['en']] = s.value.en;
+            if (s.key === 'homepage.featuredLabs.buttonUrl') {
+              this.buttonUrl = s.value?.value || '/lab';
+            } else {
+              const field = fieldMap[s.key];
+              if (s.value?.hr !== undefined) this.sectionText['hr'][field as keyof typeof this.sectionText['hr']] = s.value.hr;
+              if (s.value?.en !== undefined) this.sectionText['en'][field as keyof typeof this.sectionText['en']] = s.value.en;
+            }
           }
         }
       },
@@ -348,6 +358,14 @@ export class FeaturedLabsConfigComponent implements OnInit {
       if (existing) {
         this.settingsService.updateSetting(existing.id, { value }).subscribe();
       }
+    }
+
+    // Save buttonUrl
+    const urlSetting = this.settingsMap['homepage.featuredLabs.buttonUrl'];
+    if (urlSetting) {
+      this.settingsService.updateSetting(urlSetting.id, { value: { value: this.buttonUrl } }).subscribe();
+    } else {
+      this.settingsService.createSetting({ key: 'homepage.featuredLabs.buttonUrl', value: { value: this.buttonUrl }, group: 'homepage' }).subscribe();
     }
   }
 
