@@ -106,6 +106,26 @@ import { AuthService } from '../../core/services/auth.service';
             </div>
           </div>
 
+          <!-- Mapbox -->
+          <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+            <div class="flex items-center gap-2 mb-1">
+              <i class="pi pi-map text-indigo-500"></i>
+              <h3 class="text-base font-semibold text-surface-900 dark:text-surface-0">Mapbox</h3>
+            </div>
+            <p class="text-xs text-surface-400 mb-4">Map rendering for locations page</p>
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Access Token</label>
+              <p-password
+                [ngModel]="getSettingValue('integrations.mapboxAccessToken')"
+                (ngModelChange)="setSettingValue('integrations.mapboxAccessToken', $event, 'integrations')"
+                [feedback]="false"
+                [toggleMask]="true"
+                styleClass="w-full"
+                inputStyleClass="w-full"
+                placeholder="pk.eyJ1..." />
+            </div>
+          </div>
+
           <!-- Analytics — full width -->
           <div class="xl:col-span-2 bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
             <div class="flex items-center gap-2 mb-1">
