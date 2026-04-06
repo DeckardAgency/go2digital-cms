@@ -8,8 +8,11 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { CheckboxModule } from 'primeng/checkbox';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
+import { SettingsService, Setting } from '../../../core/services/settings.service';
 import { environment } from '../../../../environments/environment';
 
 interface LabProject {
@@ -33,7 +36,7 @@ interface FeaturedLabsConfig {
   standalone: true,
   imports: [
     CommonModule, FormsModule, ButtonModule, ToggleSwitchModule,
-    TableModule, TagModule, CheckboxModule, ToastModule
+    TableModule, TagModule, CheckboxModule, InputTextModule, TextareaModule, ToastModule
   ],
   providers: [MessageService],
   template: `
@@ -56,6 +59,50 @@ interface FeaturedLabsConfig {
           (onClick)="save()" />
       </div>
 
+      <!-- Two-column layout -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- LEFT 2/3: Section Text -->
+        <div class="lg:col-span-2">
+          <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+            <div class="flex items-center justify-between mb-5">
+              <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0">Section Text</h2>
+              <div class="flex items-center gap-0.5 bg-surface-100 dark:bg-surface-800 rounded-lg p-0.5">
+                @for (loc of textLocales; track loc.code) {
+                  <button type="button"
+                    class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                    [class]="activeTextLocale === loc.code
+                      ? 'bg-surface-0 dark:bg-surface-700 text-surface-900 dark:text-surface-0 shadow-sm'
+                      : 'text-surface-500 hover:text-surface-700 dark:hover:text-surface-300'"
+                    (click)="activeTextLocale = loc.code">
+                    {{ loc.code.toUpperCase() }}
+                  </button>
+                }
+              </div>
+            </div>
+            <div class="flex flex-col gap-4">
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Label</label>
+                <input pInputText class="w-full" [(ngModel)]="sectionText[activeTextLocale].label" />
+              </div>
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Title</label>
+                <input pInputText class="w-full" [(ngModel)]="sectionText[activeTextLocale].title" />
+              </div>
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Description</label>
+                <textarea pTextarea class="w-full" [rows]="3" [(ngModel)]="sectionText[activeTextLocale].description"></textarea>
+              </div>
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-surface-700 dark:text-surface-300">Button Text</label>
+                <input pInputText class="w-full" [(ngModel)]="sectionText[activeTextLocale].buttonText" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT 1/3: Mode + Info -->
+        <div class="space-y-6">
+
       <!-- Mode Toggle -->
       <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
         <div class="flex items-center justify-between">
@@ -72,6 +119,9 @@ interface FeaturedLabsConfig {
           <p-toggleswitch [(ngModel)]="autoModeValue" (ngModelChange)="onModeChange($event)" />
         </div>
       </div>
+
+        </div><!-- end right col -->
+      </div><!-- end grid -->
 
       <!-- Manual Selection (only shown when auto mode is OFF) -->
       @if (!autoMode()) {
@@ -178,6 +228,7 @@ interface FeaturedLabsConfig {
 export class FeaturedLabsConfigComponent implements OnInit {
   private http = inject(HttpClient);
   private messageService = inject(MessageService);
+  private settingsService = inject(SettingsService);
   router = inject(Router);
   private apiUrl = environment.apiUrl;
 
@@ -189,10 +240,20 @@ export class FeaturedLabsConfigComponent implements OnInit {
   saving = signal(false);
   loading = signal(true);
 
+  // Section text
+  activeTextLocale = 'hr';
+  textLocales = [{ code: 'hr', label: 'Hrvatski' }, { code: 'en', label: 'English' }];
+  sectionText: Record<string, { label: string; title: string; description: string; buttonText: string }> = {
+    hr: { label: '', title: '', description: '', buttonText: '' },
+    en: { label: '', title: '', description: '', buttonText: '' },
+  };
+  private settingsMap: Record<string, Setting> = {};
+
   ngOnInit(): void {
     this.loadConfig();
     this.loadProjects();
     this.loadPreview();
+    this.loadSectionText();
   }
 
   loadConfig(): void {
@@ -250,6 +311,46 @@ export class FeaturedLabsConfigComponent implements OnInit {
     }
   }
 
+  loadSectionText(): void {
+    const textKeys = ['homepage.featuredLabs.label', 'homepage.featuredLabs.title', 'homepage.featuredLabs.description', 'homepage.featuredLabs.buttonText'];
+    const fieldMap: Record<string, string> = {
+      'homepage.featuredLabs.label': 'label',
+      'homepage.featuredLabs.title': 'title',
+      'homepage.featuredLabs.description': 'description',
+      'homepage.featuredLabs.buttonText': 'buttonText',
+    };
+
+    this.settingsService.getSettings().subscribe({
+      next: (settings) => {
+        for (const s of settings) {
+          if (textKeys.includes(s.key)) {
+            this.settingsMap[s.key] = s;
+            const field = fieldMap[s.key];
+            if (s.value?.hr !== undefined) this.sectionText['hr'][field as keyof typeof this.sectionText['hr']] = s.value.hr;
+            if (s.value?.en !== undefined) this.sectionText['en'][field as keyof typeof this.sectionText['en']] = s.value.en;
+          }
+        }
+      },
+    });
+  }
+
+  private saveSectionText(): void {
+    const fieldMap: Record<string, string> = {
+      label: 'homepage.featuredLabs.label',
+      title: 'homepage.featuredLabs.title',
+      description: 'homepage.featuredLabs.description',
+      buttonText: 'homepage.featuredLabs.buttonText',
+    };
+
+    for (const [field, key] of Object.entries(fieldMap)) {
+      const value = { hr: this.sectionText['hr'][field as keyof typeof this.sectionText['hr']], en: this.sectionText['en'][field as keyof typeof this.sectionText['en']] };
+      const existing = this.settingsMap[key];
+      if (existing) {
+        this.settingsService.updateSetting(existing.id, { value }).subscribe();
+      }
+    }
+  }
+
   save(): void {
     this.saving.set(true);
 
@@ -257,6 +358,8 @@ export class FeaturedLabsConfigComponent implements OnInit {
       mode: this.autoMode() ? 'auto' : 'manual',
       selectedProjectIds: this.selectedIds(),
     };
+
+    this.saveSectionText();
 
     this.http.put<FeaturedLabsConfig>(`${this.apiUrl}/homepage/featured-labs/config`, payload).subscribe({
       next: () => {
