@@ -138,6 +138,7 @@ export class NavigationService {
         { id: 'settings-integrations', label: 'Integrations', icon: 'pi pi-link', route: '/settings/integrations' },
         { id: 'settings-seo', label: 'SEO', icon: 'pi pi-search', route: '/settings/seo' },
         { id: 'settings-translations', label: 'Translations', icon: 'pi pi-language', route: '/settings/translations' },
+        { id: 'settings-pdf-layout', label: 'PDF Layout', icon: 'pi pi-file-pdf', route: '/settings/pdf-layout' },
         { id: 'settings-maintenance', label: 'Maintenance', icon: 'pi pi-wrench', route: '/settings/maintenance' },
         { id: 'settings-advanced', label: 'Advanced', icon: 'pi pi-database', route: '/settings/advanced' },
       ]

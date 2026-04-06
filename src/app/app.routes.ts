@@ -99,6 +99,7 @@ export const routes: Routes = [
       { path: 'users', loadComponent: () => import('./features/users/user-list.component').then(m => m.UserListComponent) },
       // Settings
       { path: 'settings', redirectTo: 'settings/general', pathMatch: 'full' },
+      { path: 'settings/pdf-layout', loadComponent: () => import('./features/settings/pdf-layout-builder.component').then(m => m.PdfLayoutBuilderComponent) },
       { path: 'settings/:section', loadComponent: () => import('./features/settings/settings-page.component').then(m => m.SettingsPageComponent) },
       // Contact
       { path: 'contact/info', loadComponent: () => import('./features/contact/contact-info-list.component').then(m => m.ContactInfoListComponent) },
