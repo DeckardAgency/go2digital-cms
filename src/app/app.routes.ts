@@ -39,6 +39,7 @@ export const routes: Routes = [
       { path: 'homepage/human-focused', loadComponent: () => import('./features/homepage/human-focused-editor.component').then(m => m.HumanFocusedEditorComponent) },
       { path: 'homepage/text-animation', loadComponent: () => import('./features/homepage/text-animation-editor.component').then(m => m.TextAnimationEditorComponent) },
       { path: 'homepage/billboard', loadComponent: () => import('./features/homepage/billboard-editor.component').then(m => m.BillboardEditorComponent) },
+      { path: 'homepage/analytics', loadComponent: () => import('./features/homepage/analytics-editor.component').then(m => m.AnalyticsEditorComponent) },
       { path: 'homepage/why-section', loadComponent: () => import('./features/homepage/why-section-editor.component').then(m => m.WhySectionEditorComponent) },
       { path: 'homepage/custom-image', loadComponent: () => import('./features/homepage/custom-image-editor.component').then(m => m.CustomImageEditorComponent) },
       { path: 'homepage/rentals-image', loadComponent: () => import('./features/homepage/rentals-image-editor.component').then(m => m.RentalsImageEditorComponent) },
