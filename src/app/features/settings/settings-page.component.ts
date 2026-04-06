@@ -498,8 +498,65 @@ export class SettingsPageComponent implements OnInit, OnDestroy {
 
   translationSections = [
     { group: 'homepage', label: 'Homepage' },
+    { group: 'location', label: 'Locations' },
+    { group: 'lab', label: 'Lab' },
+    { group: 'blog', label: 'Blog' },
+    { group: 'nav', label: 'Navigation' },
     { group: 'footer', label: 'Footer' },
   ];
+
+  // Pre-defined translation keys per group — shown even when no DB value exists
+  predefinedTranslationKeys: Record<string, string[]> = {
+    location: [
+      'location.title',
+      'location.collectionView',
+      'location.search.placeholder',
+      'location.search.button',
+      'location.search.filterPlaceholder',
+      'location.search.label',
+      'location.filters.title',
+      'location.filters.cities',
+      'location.filters.environments',
+      'location.filters.clearAll',
+      'location.filters.apply',
+      'location.clearAll',
+      'location.noResults',
+      'location.collection',
+      'location.shareUrl',
+      'location.downloadPdf',
+      'location.emptyCollection',
+      'location.emptyCollectionHint',
+      'location.viewSwitcher.grid',
+      'location.viewSwitcher.map',
+      'location.mapStyle.light',
+      'location.mapStyle.dark',
+      'location.toast.added',
+      'location.toast.removed',
+      'location.confirmClear',
+    ],
+    lab: [
+      'lab.aboutProject',
+      'lab.viewAll',
+      'lab.viewProject',
+      'lab.pageTitle',
+      'lab.title',
+      'lab.filterAll',
+      'lab.noResults',
+    ],
+    blog: [
+      'blog.viewAll',
+      'blog.pageTitle',
+      'blog.filterAll',
+      'blog.noResults',
+    ],
+    nav: [
+      'nav.home',
+      'nav.lab',
+      'nav.blog',
+      'nav.about',
+      'nav.contact',
+    ],
+  };
 
   activeTranslationLocale = 'hr';
 
@@ -580,7 +637,16 @@ export class SettingsPageComponent implements OnInit, OnDestroy {
   }
 
   getTranslationSettings(group: string): Setting[] {
-    return this.allSettings().filter(s => s.group === group && this.isTranslationSetting(s));
+    const existing = this.allSettings().filter(s => s.group === group && this.isTranslationSetting(s));
+    const existingKeys = new Set(existing.map(s => s.key));
+
+    // Add predefined keys that don't exist in DB yet
+    const predefined = this.predefinedTranslationKeys[group] || [];
+    const placeholders: Setting[] = predefined
+      .filter(key => !existingKeys.has(key))
+      .map(key => ({ key, group, value: { hr: '', en: '' } } as Setting));
+
+    return [...existing, ...placeholders];
   }
 
   private isTranslationSetting(s: Setting): boolean {
