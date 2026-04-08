@@ -57,6 +57,10 @@ export const routes: Routes = [
       { path: 'homepage/tracking/:id', loadComponent: () => import('./features/homepage/tracking/tracking-form.component').then(m => m.TrackingFormComponent) },
       // Homepage — Featured Labs Configuration
       { path: 'homepage/featured-labs', loadComponent: () => import('./features/homepage/featured-labs/featured-labs-config.component').then(m => m.FeaturedLabsConfigComponent) },
+      // Homepage — Analytics Tabs
+      { path: 'homepage/analytics-tabs', loadComponent: () => import('./features/homepage/analytics-tabs/analytics-tab-list.component').then(m => m.AnalyticsTabListComponent) },
+      { path: 'homepage/analytics-tabs/new', loadComponent: () => import('./features/homepage/analytics-tabs/analytics-tab-form.component').then(m => m.AnalyticsTabFormComponent) },
+      { path: 'homepage/analytics-tabs/:id', loadComponent: () => import('./features/homepage/analytics-tabs/analytics-tab-form.component').then(m => m.AnalyticsTabFormComponent) },
       // Homepage — Possibilities
       { path: 'homepage/possibilities', loadComponent: () => import('./features/homepage/possibilities/possibilities-list.component').then(m => m.PossibilitiesListComponent) },
       { path: 'homepage/possibilities/new', loadComponent: () => import('./features/homepage/possibilities/possibilities-form.component').then(m => m.PossibilitiesFormComponent) },

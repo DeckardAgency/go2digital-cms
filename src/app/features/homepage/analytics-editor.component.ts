@@ -1,10 +1,12 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
 import { SingletonEditorComponent, SingletonTranslatableField } from './singleton-editor.component';
 
 @Component({
   selector: 'app-analytics-editor',
   standalone: true,
-  imports: [SingletonEditorComponent],
+  imports: [SingletonEditorComponent, ButtonModule],
   template: `
     <app-singleton-editor
       singletonType="homepage-analytics"
@@ -14,6 +16,14 @@ import { SingletonEditorComponent, SingletonTranslatableField } from './singleto
       [translatableFields]="fields">
       <div preview>
         <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0">Graph Tabs</h2>
+            <p-button label="Manage Tabs" icon="pi pi-chart-bar" severity="secondary" [outlined]="true" size="small" (onClick)="router.navigate(['/homepage/analytics-tabs'])" />
+          </div>
+          <p class="text-sm text-surface-500">Configure the tab names, Y-axis labels, and curve types for the analytics graph.</p>
+        </div>
+
+        <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6 mt-6">
           <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Preview</h2>
           <div class="rounded-lg overflow-hidden border border-surface-200 dark:border-surface-700 p-5" style="background: #0a1a14; min-height: 120px;">
             <div class="flex items-center gap-2 mb-3">
@@ -30,6 +40,7 @@ import { SingletonEditorComponent, SingletonTranslatableField } from './singleto
   `,
 })
 export class AnalyticsEditorComponent {
+  readonly router = inject(Router);
   fields: SingletonTranslatableField[] = [
     { key: 'indicator', label: 'Indicator Text', type: 'text' },
     { key: 'title', label: 'Title', type: 'text' },
