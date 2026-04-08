@@ -186,15 +186,20 @@ interface DashboardData {
       </div>
 
       <!-- Quick Actions -->
-      <div class="mt-6 bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-5">
-        <h3 class="text-sm font-semibold text-surface-900 dark:text-surface-0 mb-4">Quick Actions</h3>
-        <div class="flex flex-wrap gap-2">
-          <p-button label="New Blog Post" icon="pi pi-plus" size="small" [outlined]="true" (onClick)="router.navigate(['/blog/posts/new'])" />
-          <p-button label="New Lab Project" icon="pi pi-plus" size="small" [outlined]="true" (onClick)="router.navigate(['/lab/projects/new'])" />
-          <p-button label="New Page" icon="pi pi-plus" size="small" [outlined]="true" (onClick)="router.navigate(['/pages/new'])" />
-          <p-button label="Upload Media" icon="pi pi-upload" size="small" [outlined]="true" (onClick)="router.navigate(['/media'])" />
-          <p-button label="Edit Homepage" icon="pi pi-desktop" size="small" [outlined]="true" (onClick)="router.navigate(['/homepage'])" />
-          <p-button label="Settings" icon="pi pi-cog" size="small" severity="secondary" [outlined]="true" (onClick)="router.navigate(['/settings/general'])" />
+      <div class="mt-6">
+        <h3 class="text-sm font-semibold text-surface-900 dark:text-surface-0 mb-3">Quick Actions</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          @for (action of quickActions; track action.label) {
+            <div class="group bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-4 cursor-pointer transition-all hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-sm"
+              (click)="router.navigate([action.route])">
+              <div class="w-9 h-9 rounded-lg flex items-center justify-center mb-3 transition-colors"
+                [style.background-color]="action.color + '15'" [style.color]="action.color">
+                <i [class]="action.icon" class="text-base"></i>
+              </div>
+              <p class="text-sm font-medium text-surface-900 dark:text-surface-0 leading-tight">{{ action.label }}</p>
+              <p class="text-[11px] text-surface-400 mt-1">{{ action.description }}</p>
+            </div>
+          }
         </div>
       </div>
     </div>
@@ -208,6 +213,15 @@ export class DashboardComponent implements OnInit {
 
   isLoading = signal(true);
   data = signal<DashboardData | null>(null);
+
+  quickActions = [
+    { label: 'New Blog Post', description: 'Write an article', icon: 'pi pi-pen-to-square', route: '/blog/posts/new', color: '#6366f1' },
+    { label: 'New Lab Project', description: 'Add a showcase', icon: 'pi pi-code', route: '/lab/projects/new', color: '#8b5cf6' },
+    { label: 'New Page', description: 'Create a page', icon: 'pi pi-file', route: '/pages/new', color: '#0ea5e9' },
+    { label: 'Upload Media', description: 'Add files & images', icon: 'pi pi-cloud-upload', route: '/media', color: '#10b981' },
+    { label: 'Edit Homepage', description: 'Manage sections', icon: 'pi pi-desktop', route: '/homepage', color: '#f59e0b' },
+    { label: 'Settings', description: 'Site configuration', icon: 'pi pi-cog', route: '/settings/general', color: '#64748b' },
+  ];
 
   statCards: { label: string; icon: string; count: number; route: string; color: string; sub?: string }[] = [];
 
