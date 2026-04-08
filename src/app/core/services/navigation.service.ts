@@ -70,7 +70,8 @@ export class NavigationService {
         { id: 'hp-analytics', label: 'Analytics', icon: 'pi pi-chart-bar', route: '/homepage/analytics' },
         { id: 'hp-tracking', label: 'Tracking Features', icon: 'pi pi-chart-line', route: '/homepage/tracking' },
         { id: 'hp-rentals', label: 'Rentals Image', icon: 'pi pi-image', route: '/homepage/rentals-image' },
-        { id: 'hp-products', label: 'Products', icon: 'pi pi-box', route: '/homepage/products' }
+        { id: 'hp-products', label: 'Products', icon: 'pi pi-box', route: '/homepage/products' },
+        { id: 'hp-possibilities', label: 'Possibilities', icon: 'pi pi-list', route: '/homepage/possibilities' }
       ]
     },
     {

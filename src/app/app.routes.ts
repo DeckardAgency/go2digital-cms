@@ -57,6 +57,10 @@ export const routes: Routes = [
       { path: 'homepage/tracking/:id', loadComponent: () => import('./features/homepage/tracking/tracking-form.component').then(m => m.TrackingFormComponent) },
       // Homepage — Featured Labs Configuration
       { path: 'homepage/featured-labs', loadComponent: () => import('./features/homepage/featured-labs/featured-labs-config.component').then(m => m.FeaturedLabsConfigComponent) },
+      // Homepage — Possibilities
+      { path: 'homepage/possibilities', loadComponent: () => import('./features/homepage/possibilities/possibilities-list.component').then(m => m.PossibilitiesListComponent) },
+      { path: 'homepage/possibilities/new', loadComponent: () => import('./features/homepage/possibilities/possibilities-form.component').then(m => m.PossibilitiesFormComponent) },
+      { path: 'homepage/possibilities/:id', loadComponent: () => import('./features/homepage/possibilities/possibilities-form.component').then(m => m.PossibilitiesFormComponent) },
       // Homepage — Products
       { path: 'homepage/products', loadComponent: () => import('./features/homepage/products/product-list.component').then(m => m.ProductListComponent) },
       { path: 'homepage/products/new', loadComponent: () => import('./features/homepage/products/product-form.component').then(m => m.ProductFormComponent) },

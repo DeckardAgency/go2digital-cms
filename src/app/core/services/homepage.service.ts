@@ -262,6 +262,52 @@ export class HomepageService {
     );
   }
 
+  // --- Possibilities ---
+
+  getPossibilities(): Observable<any[]> {
+    this._isLoading.set(true);
+    const params = new HttpParams().set('includeTranslations', 'true');
+
+    return this.http.get<any[]>(`${this.apiUrl}/homepage_possibilities`, { params }).pipe(
+      finalize(() => this._isLoading.set(false))
+    );
+  }
+
+  getPossibility(id: string): Observable<any> {
+    this._isLoading.set(true);
+    const params = new HttpParams().set('includeTranslations', 'true');
+
+    return this.http.get<any>(`${this.apiUrl}/homepage_possibilities/${id}`, { params }).pipe(
+      finalize(() => this._isLoading.set(false))
+    );
+  }
+
+  createPossibility(data: any): Observable<any> {
+    this._isLoading.set(true);
+    const headers = new HttpHeaders({ 'Content-Type': 'application/ld+json' });
+
+    return this.http.post<any>(`${this.apiUrl}/homepage_possibilities`, data, { headers }).pipe(
+      finalize(() => this._isLoading.set(false))
+    );
+  }
+
+  updatePossibility(id: string, data: any): Observable<any> {
+    this._isLoading.set(true);
+    const headers = new HttpHeaders({ 'Content-Type': 'application/merge-patch+json' });
+
+    return this.http.patch<any>(`${this.apiUrl}/homepage_possibilities/${id}`, data, { headers }).pipe(
+      finalize(() => this._isLoading.set(false))
+    );
+  }
+
+  deletePossibility(id: string): Observable<void> {
+    this._isLoading.set(true);
+
+    return this.http.delete<void>(`${this.apiUrl}/homepage_possibilities/${id}`).pipe(
+      finalize(() => this._isLoading.set(false))
+    );
+  }
+
   // --- Product Features ---
 
   getProductFeatures(productId?: string): Observable<any[]> {

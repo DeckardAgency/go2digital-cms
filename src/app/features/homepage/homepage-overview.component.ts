@@ -105,6 +105,7 @@ export class HomepageOverviewComponent implements OnInit {
     { id: 'analytics', label: 'Analytics', description: 'Impressions section with dot grid graph', icon: 'pi pi-chart-bar', editRoute: '/homepage/analytics', type: 'singleton', color: '#22c55e' },
     { id: 'tracking', label: 'Tracking Features', description: 'Real-time tracking and analytics features', icon: 'pi pi-chart-line', editRoute: '/homepage/tracking', type: 'collection', color: '#0ea5e9' },
     { id: 'rentals-image', label: 'Rentals Image', description: 'Full-width section with text overlay', icon: 'pi pi-image', editRoute: '/homepage/rentals-image', type: 'singleton', color: '#64748b' },
+    { id: 'possibilities', label: 'Possibilities', description: 'Scroll-through list of digital screen possibilities', icon: 'pi pi-list', editRoute: '/homepage/possibilities', type: 'collection', color: '#f59e0b' },
     { id: 'products', label: 'Products', description: 'Digital Citylight and Digital Screens products', icon: 'pi pi-box', editRoute: '/homepage/products', type: 'collection', color: '#a855f7' },
   ];
 
