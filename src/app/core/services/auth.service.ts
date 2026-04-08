@@ -54,8 +54,10 @@ export class AuthService {
       try {
         this._user.set(JSON.parse(userStr));
         this._isAuthenticated.set(true);
+        this.setSharedCookie(token);
       } catch {
         this.clearStorage();
+        this.clearSharedCookie();
       }
     }
   }
@@ -66,6 +68,7 @@ export class AuthService {
         localStorage.setItem(this.TOKEN_KEY, response.token);
         localStorage.setItem(this.REFRESH_KEY, response.refreshToken);
         this._isAuthenticated.set(true);
+        this.setSharedCookie(response.token);
       }),
       switchMap(() => this.fetchUser()),
       switchMap(() => {
@@ -107,6 +110,7 @@ export class AuthService {
         if (response.refreshToken) {
           localStorage.setItem(this.REFRESH_KEY, response.refreshToken);
         }
+        this.setSharedCookie(response.token);
         this.refreshSubject.next(response.token);
       })
     );
@@ -114,6 +118,7 @@ export class AuthService {
 
   logout(): void {
     this.clearStorage();
+    this.clearSharedCookie();
     this._user.set(null);
     this._isAuthenticated.set(false);
     this.router.navigate(['/login']);
@@ -135,5 +140,19 @@ export class AuthService {
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.REFRESH_KEY);
     localStorage.removeItem(this.USER_KEY);
+  }
+
+  /** Set a shared cookie readable by the Nuxt frontend on the same domain */
+  private setSharedCookie(token: string): void {
+    const maxAge = 3600;
+    const domain = environment.production ? '; domain=.go2digital.hr' : '';
+    const secure = environment.production ? '; secure' : '';
+    document.cookie = `g2d_token=${token}; path=/${domain}${secure}; samesite=lax; max-age=${maxAge}`;
+  }
+
+  /** Remove the shared cookie */
+  private clearSharedCookie(): void {
+    const domain = environment.production ? '; domain=.go2digital.hr' : '';
+    document.cookie = `g2d_token=; path=/${domain}; max-age=0`;
   }
 }
