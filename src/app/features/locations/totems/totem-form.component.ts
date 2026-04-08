@@ -13,6 +13,7 @@ import { MessageService } from 'primeng/api';
 
 import { LocationService, TotemDetail } from '../../../core/services/location.service';
 import { SeoEditorComponent, SeoContentContext } from '../../../shared/components/seo-editor/seo-editor.component';
+import { FocalPointPickerComponent } from '../../../shared/components/focal-point-picker/focal-point-picker.component';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -21,7 +22,7 @@ import { environment } from '../../../../environments/environment';
   imports: [
     CommonModule, FormsModule, InputTextModule, TextareaModule,
     ToggleSwitchModule, InputNumberModule, ButtonModule,
-    SeoEditorComponent,
+    SeoEditorComponent, FocalPointPickerComponent,
   ],
   template: `
     <div class="space-y-6">
@@ -159,6 +160,21 @@ import { environment } from '../../../../environments/environment';
             </div>
           </div>
 
+          <!-- Hero Image & Focal Point -->
+          @if (heroImageUrl) {
+            <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+              <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Hero Image</h2>
+              <div class="rounded-lg overflow-hidden border border-surface-200 dark:border-surface-700 mb-4" style="aspect-ratio: 4/3;">
+                <img [src]="heroImageUrl" alt="Hero" class="w-full h-full object-cover" [style.object-position]="imageFocalX + '% ' + imageFocalY + '%'">
+              </div>
+              <app-focal-point-picker
+                [imageUrl]="heroImageUrl"
+                [focalX]="imageFocalX"
+                [focalY]="imageFocalY"
+                (focalPointChange)="onFocalPointChange($event)" />
+            </div>
+          }
+
           <!-- Info Card -->
           <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
             <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Info</h2>
@@ -261,6 +277,13 @@ export class TotemFormComponent implements OnInit {
   screenHeight = 0;
   sortOrder = 0;
 
+  // Focal point fields
+  imageFocalX = 50;
+  imageFocalY = 50;
+  imageFocalMobileX = 50;
+  imageFocalMobileY = 50;
+  heroImageUrl = '';
+
   // Info fields (read-only)
   cityName = '';
   cdnTotemId = 0;
@@ -299,6 +322,16 @@ export class TotemFormComponent implements OnInit {
         this.screenHeight = totem.screenHeight;
         this.sortOrder = totem.sortOrder;
 
+        this.imageFocalX = totem.imageFocalX ?? 50;
+        this.imageFocalY = totem.imageFocalY ?? 50;
+        this.imageFocalMobileX = totem.imageFocalMobileX ?? 50;
+        this.imageFocalMobileY = totem.imageFocalMobileY ?? 50;
+        if (totem.images?.length) {
+          const img = totem.images[0];
+          const path = img.large || img.main || img.thumbnail || '';
+          this.heroImageUrl = path.startsWith('http') ? path : `https://cdn.go2digital.hr${path.startsWith('/') ? '' : '/'}${path}`;
+        }
+
         this.cityName = totem.cityName;
         this.cdnTotemId = totem.cdnTotemId;
         this.lastSyncedAt = totem.lastSyncedAt;
@@ -319,6 +352,11 @@ export class TotemFormComponent implements OnInit {
         en: { name: this.nameEn, description: this.descriptionEn },
       },
     };
+  }
+
+  onFocalPointChange(point: { x: number; y: number }): void {
+    this.imageFocalX = point.x;
+    this.imageFocalY = point.y;
   }
 
   onSave(): void {
@@ -342,6 +380,10 @@ export class TotemFormComponent implements OnInit {
       screenWidth: this.screenWidth,
       screenHeight: this.screenHeight,
       sortOrder: this.sortOrder,
+      imageFocalX: this.imageFocalX,
+      imageFocalY: this.imageFocalY,
+      imageFocalMobileX: this.imageFocalMobileX,
+      imageFocalMobileY: this.imageFocalMobileY,
     };
 
     this.locationService.updateTotem(id, payload).subscribe({

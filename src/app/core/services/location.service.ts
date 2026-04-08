@@ -71,6 +71,11 @@ export interface TotemDetail extends Totem {
   isBigScreen: boolean;
   adDuration: number;
   manualOverrides: string[];
+  imageFocalX: number | null;
+  imageFocalY: number | null;
+  imageFocalMobileX: number | null;
+  imageFocalMobileY: number | null;
+  images: any[] | null;
 }
 
 @Injectable({ providedIn: 'root' })
