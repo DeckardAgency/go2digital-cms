@@ -7,13 +7,34 @@ import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { AuthService } from '../../../core/services/auth.service';
+import { ThemeService } from '../../../core/services/theme.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, InputTextModule, PasswordModule, ButtonModule, CheckboxModule],
+  styles: [`
+    .login-bg {
+      background-color: #f4f4f5;
+      background-image: radial-gradient(circle, #a0a0ac 0.7px, transparent 0.7px);
+      background-size: 9px 9px;
+    }
+    :host-context(.dark) .login-bg {
+      background-color: #09090b;
+      background-image: radial-gradient(circle, #52525b 0.7px, transparent 0.7px);
+      background-size: 9px 9px;
+    }
+  `],
   template: `
-    <div class="min-h-screen flex items-center justify-center bg-zinc-100 dark:bg-zinc-950 px-4">
+    <div class="login-bg min-h-screen flex items-center justify-center px-4 relative">
+      <!-- Dark mode toggle -->
+      <button
+        type="button"
+        class="absolute top-4 right-4 w-9 h-9 rounded-lg flex items-center justify-center text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+        (click)="themeService.toggleTheme()">
+        <i [class]="themeService.isDark() ? 'pi pi-sun' : 'pi pi-moon'" class="text-base"></i>
+      </button>
+
       <div class="w-full max-w-md">
         <!-- Logo -->
         <div class="text-center mb-8">
@@ -59,6 +80,17 @@ import { AuthService } from '../../../core/services/auth.service';
                   inputStyleClass="w-full" />
               </div>
 
+              <!-- Remember me + Forgot password -->
+              <div class="flex items-center justify-between">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <p-checkbox formControlName="rememberMe" [binary]="true" />
+                  <span class="text-sm text-zinc-600 dark:text-zinc-400">Remember me</span>
+                </label>
+                <a href="javascript:void(0)" class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline" (click)="forgotPassword()">
+                  Forgot password?
+                </a>
+              </div>
+
               <!-- Submit -->
               <p-button
                 type="submit"
@@ -70,6 +102,9 @@ import { AuthService } from '../../../core/services/auth.service';
             </div>
           </form>
         </div>
+
+        <!-- Footer -->
+        <p class="text-center text-xs text-zinc-400 dark:text-zinc-600 mt-6">&copy; {{ currentYear }} Go2Digital. All rights reserved.</p>
       </div>
     </div>
   `
@@ -79,13 +114,17 @@ export class LoginComponent {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private authService = inject(AuthService);
+  readonly themeService = inject(ThemeService);
 
   error = signal('');
   isLoading = signal(false);
 
+  currentYear = new Date().getFullYear();
+
   loginForm = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(4)]]
+    password: ['', [Validators.required, Validators.minLength(4)]],
+    rememberMe: [false],
   });
 
   onSubmit(): void {
@@ -109,5 +148,18 @@ export class LoginComponent {
         this.isLoading.set(false);
       }
     });
+  }
+
+  forgotPassword(): void {
+    const email = this.loginForm.value.email;
+    if (email) {
+      this.authService.requestPasswordReset(email).subscribe({
+        next: () => this.error.set(''),
+        error: () => {},
+      });
+      this.error.set('If the email exists, a reset link has been sent.');
+    } else {
+      this.error.set('Enter your email address first, then click Forgot password.');
+    }
   }
 }

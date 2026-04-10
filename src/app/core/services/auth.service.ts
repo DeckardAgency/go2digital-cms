@@ -136,6 +136,10 @@ export class AuthService {
     return this._user()?.roles?.includes('ROLE_SUPER_ADMIN') ?? false;
   }
 
+  requestPasswordReset(email: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/auth/reset-password`, { email });
+  }
+
   private clearStorage(): void {
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.REFRESH_KEY);
