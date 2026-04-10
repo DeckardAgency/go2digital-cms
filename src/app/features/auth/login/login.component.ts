@@ -15,18 +15,40 @@ import { ThemeService } from '../../../core/services/theme.service';
   imports: [CommonModule, ReactiveFormsModule, InputTextModule, PasswordModule, ButtonModule, CheckboxModule],
   styles: [`
     .login-bg {
+      --glow-x: 0;
+      --glow-y: 0;
+      --glow-opacity: 0;
       background-color: #f4f4f5;
-      background-image: radial-gradient(circle, #a0a0ac 0.7px, transparent 0.7px);
+      background-image: radial-gradient(circle, #c8c8d0 0.7px, transparent 0.7px);
       background-size: 9px 9px;
+      position: relative;
+    }
+    .login-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, #71717a 0.7px, transparent 0.7px);
+      background-size: 9px 9px;
+      mask-image: radial-gradient(circle 90px at var(--glow-x) var(--glow-y), black, transparent);
+      -webkit-mask-image: radial-gradient(circle 90px at var(--glow-x) var(--glow-y), black, transparent);
+      opacity: var(--glow-opacity);
+      transition: opacity 0.8s ease;
+      pointer-events: none;
+      z-index: 0;
     }
     :host-context(.dark) .login-bg {
       background-color: #09090b;
-      background-image: radial-gradient(circle, #52525b 0.7px, transparent 0.7px);
+      background-image: radial-gradient(circle, #27272a 0.7px, transparent 0.7px);
+      background-size: 9px 9px;
+    }
+    :host-context(.dark) .login-bg::after {
+      background-image: radial-gradient(circle, #a1a1aa 0.7px, transparent 0.7px);
       background-size: 9px 9px;
     }
   `],
   template: `
-    <div class="login-bg min-h-screen flex items-center justify-center px-4 relative">
+    <div class="login-bg min-h-screen flex items-center justify-center px-4 relative" (mousemove)="onMouseMove($event)" (mouseleave)="onMouseLeave()"
+      [style.--glow-x.px]="glowX" [style.--glow-y.px]="glowY" [style.--glow-opacity]="glowVisible ? 1 : 0">
       <!-- Dark mode toggle -->
       <button
         type="button"
@@ -46,7 +68,7 @@ import { ThemeService } from '../../../core/services/theme.service';
         </div>
 
         <!-- Login Form -->
-        <div class="bg-white dark:bg-zinc-900 rounded-2xl p-8 shadow-sm border border-zinc-200 dark:border-zinc-800">
+        <div class="login-card bg-white dark:bg-zinc-900 rounded-2xl p-8 shadow-sm border border-zinc-200 dark:border-zinc-800 relative z-10">
           @if (error()) {
             <div class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
               {{ error() }}
@@ -118,6 +140,53 @@ export class LoginComponent {
 
   error = signal('');
   isLoading = signal(false);
+
+  glowX = 0;
+  glowY = 0;
+  glowVisible = false;
+  private glowTimeout: any = null;
+  private targetX = 0;
+  private targetY = 0;
+  private rafId: number | null = null;
+  private readonly LERP = 0.08;
+
+  private startLerp(): void {
+    if (this.rafId) return;
+    const tick = () => {
+      this.glowX += (this.targetX - this.glowX) * this.LERP;
+      this.glowY += (this.targetY - this.glowY) * this.LERP;
+      if (Math.abs(this.targetX - this.glowX) > 0.5 || Math.abs(this.targetY - this.glowY) > 0.5) {
+        this.rafId = requestAnimationFrame(tick);
+      } else {
+        this.glowX = this.targetX;
+        this.glowY = this.targetY;
+        this.rafId = null;
+      }
+    };
+    this.rafId = requestAnimationFrame(tick);
+  }
+
+  onMouseMove(e: MouseEvent): void {
+    // Hide glow when hovering over the form card
+    const target = e.target as HTMLElement;
+    if (target.closest('.login-card')) {
+      this.glowVisible = false;
+      clearTimeout(this.glowTimeout);
+      return;
+    }
+
+    this.targetX = e.clientX;
+    this.targetY = e.clientY;
+    this.glowVisible = true;
+    this.startLerp();
+    clearTimeout(this.glowTimeout);
+    this.glowTimeout = setTimeout(() => this.glowVisible = false, 1500);
+  }
+
+  onMouseLeave(): void {
+    this.glowVisible = false;
+    clearTimeout(this.glowTimeout);
+  }
 
   currentYear = new Date().getFullYear();
 
