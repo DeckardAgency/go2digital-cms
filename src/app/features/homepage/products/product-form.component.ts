@@ -71,6 +71,31 @@ import { HomepageService } from '../../../core/services/homepage.service';
             </div>
           </div>
 
+          <!-- Features -->
+          @if (isEditMode()) {
+            <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0">Features</h2>
+                <p-button label="Add" icon="pi pi-plus" severity="secondary" [outlined]="true" size="small" (onClick)="router.navigate(['/homepage/product-features/new'], { queryParams: { productId: itemId() } })" />
+              </div>
+              @if (productFeatures().length === 0) {
+                <p class="text-sm text-surface-400">No features yet. Add features that appear below this product section.</p>
+              } @else {
+                <div class="flex flex-col gap-2">
+                  @for (f of productFeatures(); track f.id) {
+                    <div class="flex items-center justify-between p-3 rounded-lg bg-surface-50 dark:bg-surface-800 cursor-pointer hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors" (click)="router.navigate(['/homepage/product-features', f.id])">
+                      <div>
+                        <span class="text-sm font-medium text-surface-900 dark:text-surface-0">{{ f.translations?.hr?.title || '(no title)' }}</span>
+                        <span class="text-xs text-surface-400 ml-2">#{{ f.sortOrder }}</span>
+                      </div>
+                      <i class="pi pi-chevron-right text-xs text-surface-400"></i>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+
           <!-- Info -->
           <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
             <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Info</h2>
@@ -106,6 +131,7 @@ export class ProductFormComponent implements OnInit {
 
   productType = 'display';
   specsJson = '[]';
+  productFeatures = signal<any[]>([]);
 
   translationFields = [
     { key: 'title', label: 'Title', type: 'text' as const },
@@ -127,7 +153,19 @@ export class ProductFormComponent implements OnInit {
       this.isEditMode.set(true);
       this.itemId.set(id);
       this.loadItem(id);
+      this.loadFeatures(id);
     }
+  }
+
+  private loadFeatures(productId: string): void {
+    this.homepageService.getProductFeatures().subscribe({
+      next: (features) => {
+        const productIri = `/api/homepage_products/${productId}`;
+        const filtered = features.filter((f: any) => f.product === productIri || f.product?.['@id'] === productIri);
+        this.productFeatures.set(filtered);
+      },
+      error: () => {},
+    });
   }
 
   private loadItem(id: string): void {

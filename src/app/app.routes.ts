@@ -74,6 +74,9 @@ export const routes: Routes = [
       { path: 'homepage/products', loadComponent: () => import('./features/homepage/products/product-list.component').then(m => m.ProductListComponent) },
       { path: 'homepage/products/new', loadComponent: () => import('./features/homepage/products/product-form.component').then(m => m.ProductFormComponent) },
       { path: 'homepage/products/:id', loadComponent: () => import('./features/homepage/products/product-form.component').then(m => m.ProductFormComponent) },
+      // Homepage — Product Features
+      { path: 'homepage/product-features/new', loadComponent: () => import('./features/homepage/products/product-feature-form.component').then(m => m.ProductFeatureFormComponent) },
+      { path: 'homepage/product-features/:id', loadComponent: () => import('./features/homepage/products/product-feature-form.component').then(m => m.ProductFeatureFormComponent) },
       // ESG
       { path: 'esg/page-content', loadComponent: () => import('./features/esg/page-content.component').then(m => m.EsgPageContentComponent) },
       { path: 'esg/pillars', loadComponent: () => import('./features/esg/pillars/pillar-list.component').then(m => m.PillarListComponent) },
