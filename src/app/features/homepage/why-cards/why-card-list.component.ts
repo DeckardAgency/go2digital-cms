@@ -1,6 +1,6 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
@@ -21,6 +21,7 @@ import { HomepageService } from '../../../core/services/homepage.service';
   standalone: true,
   imports: [
     CommonModule,
+    RouterLink,
     ButtonModule,
     ConfirmDialogModule,
     DataTableWrapperComponent,
@@ -40,6 +41,15 @@ import { HomepageService } from '../../../core/services/homepage.service';
         </div>
       </div>
       <p-button label="New Card" icon="pi pi-plus" (onClick)="router.navigate(['/homepage/why-cards/new'])" />
+    </div>
+
+    <div class="bg-surface-50 dark:bg-surface-900/50 border border-surface-200 dark:border-surface-700 rounded-xl p-4 mb-6 flex items-center gap-3">
+      <i class="pi pi-info-circle text-primary-500"></i>
+      <div class="flex-1 text-sm text-surface-600 dark:text-surface-300">
+        Typography for slide numbers, titles, and body text is managed on the
+        <a routerLink="/homepage/why-section" class="text-primary-600 hover:underline font-medium">Why Section editor</a>
+        — all cards share the section's typography settings.
+      </div>
     </div>
 
     <app-data-table-wrapper

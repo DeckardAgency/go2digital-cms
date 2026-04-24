@@ -15,6 +15,7 @@ import {
   DataTableColumn,
   DataTableState,
 } from '../../../shared/components/data-table-wrapper';
+import { BlockTypographyCardComponent } from '../../../shared/components/block-typography-card/block-typography-card.component';
 import { EsgService } from '../../../core/services/esg.service';
 
 @Component({
@@ -30,9 +31,16 @@ import { EsgService } from '../../../core/services/esg.service';
     DataTableHeaderActionsDirective,
     DataTableRowActionsDirective,
     MenuModule,
+    BlockTypographyCardComponent,
   ],
   providers: [ConfirmationService],
   template: `
+    <app-block-typography-card
+      blockId="esg"
+      [elementKeys]="['cardText']"
+      title="Card Typography"
+      subtitle="Applied to each card on the public /esg page. Saving updates the shared ESG block map." />
+
     <app-data-table-wrapper
       title="ESG Cards"
       entityName="cards"

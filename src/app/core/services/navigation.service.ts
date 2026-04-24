@@ -136,6 +136,9 @@ export class NavigationService {
       route: '/settings/general',
       children: [
         { id: 'settings-general', label: 'General', icon: 'pi pi-cog', route: '/settings/general' },
+        { id: 'settings-typography', label: 'Typography', icon: 'pi pi-font', route: '/typography/presets' },
+        { id: 'settings-typography-blocks', label: 'Block Typography', icon: 'pi pi-th-large', route: '/typography/block-maps' },
+        { id: 'settings-typography-fonts', label: 'Fonts', icon: 'pi pi-align-left', route: '/typography/fonts' },
         { id: 'settings-integrations', label: 'Integrations', icon: 'pi pi-link', route: '/settings/integrations' },
         { id: 'settings-seo', label: 'SEO', icon: 'pi pi-search', route: '/settings/seo' },
         { id: 'settings-translations', label: 'Translations', icon: 'pi pi-language', route: '/settings/translations' },

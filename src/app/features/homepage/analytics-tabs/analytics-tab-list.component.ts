@@ -1,7 +1,7 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -24,6 +24,7 @@ import { HomepageService } from '../../../core/services/homepage.service';
   imports: [
     CommonModule,
     FormsModule,
+    RouterLink,
     ButtonModule,
     InputTextModule,
     ConfirmDialogModule,
@@ -44,6 +45,15 @@ import { HomepageService } from '../../../core/services/homepage.service';
         </div>
       </div>
       <p-button label="New Tab" icon="pi pi-plus" (onClick)="router.navigate(['/homepage/analytics-tabs/new'])" />
+    </div>
+
+    <div class="bg-surface-50 dark:bg-surface-900/50 border border-surface-200 dark:border-surface-700 rounded-xl p-4 mb-6 flex items-center gap-3">
+      <i class="pi pi-info-circle text-primary-500"></i>
+      <div class="flex-1 text-sm text-surface-600 dark:text-surface-300">
+        Typography for tab labels and axis labels is managed on the
+        <a routerLink="/homepage/analytics" class="text-primary-600 hover:underline font-medium">Analytics editor</a>
+        — all tabs share the section's typography settings.
+      </div>
     </div>
 
     <app-data-table-wrapper

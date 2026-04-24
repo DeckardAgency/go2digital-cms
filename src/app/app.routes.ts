@@ -113,6 +113,10 @@ export const routes: Routes = [
       { path: 'profile', loadComponent: () => import('./features/profile/profile-page.component').then(m => m.ProfilePageComponent) },
       // Users
       { path: 'users', loadComponent: () => import('./features/users/user-list.component').then(m => m.UserListComponent) },
+      // Typography
+      { path: 'typography/presets', loadComponent: () => import('./features/typography/presets-page.component').then(m => m.TypographyPresetsPageComponent) },
+      { path: 'typography/block-maps', loadComponent: () => import('./features/typography/block-maps-page.component').then(m => m.TypographyBlockMapsPageComponent) },
+      { path: 'typography/fonts', loadComponent: () => import('./features/typography/fonts-page.component').then(m => m.TypographyFontsPageComponent) },
       // Settings
       { path: 'settings', redirectTo: 'settings/general', pathMatch: 'full' },
       { path: 'settings/pdf-layout', loadComponent: () => import('./features/settings/pdf-layout-builder.component').then(m => m.PdfLayoutBuilderComponent) },

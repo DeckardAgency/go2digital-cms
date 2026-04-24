@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { SingletonEditorComponent, SingletonTranslatableField, SingletonNonTranslatableField } from './singleton-editor.component';
+import { SingletonEditorComponent, SingletonTranslatableField, SingletonNonTranslatableField, SingletonTypographyElement } from './singleton-editor.component';
 
 @Component({
   selector: 'app-billboard-editor',
@@ -13,6 +13,7 @@ import { SingletonEditorComponent, SingletonTranslatableField, SingletonNonTrans
       [sectionPosition]="9"
       [translatableFields]="fields"
       [nonTranslatableFields]="nonTranslatable"
+      [typographyElements]="typoElements"
       imageField="image">
       <div preview>
         <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
@@ -40,5 +41,11 @@ export class BillboardEditorComponent {
 
   nonTranslatable: SingletonNonTranslatableField[] = [
     { key: 'buttonUrl', label: 'Button URL', type: 'text' },
+  ];
+
+  typoElements: SingletonTypographyElement[] = [
+    { key: 'title', label: 'Title', defaultSlug: 'billboard-title' },
+    { key: 'subtitle', label: 'Subtitle', defaultSlug: 'billboard-subtitle' },
+    { key: 'description', label: 'Description', defaultSlug: 'body-sm' },
   ];
 }

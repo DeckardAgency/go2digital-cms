@@ -15,6 +15,7 @@ import {
   DataTableColumn,
   DataTableState,
 } from '../../../shared/components/data-table-wrapper';
+import { BlockTypographyCardComponent } from '../../../shared/components/block-typography-card/block-typography-card.component';
 import { EsgService } from '../../../core/services/esg.service';
 
 @Component({
@@ -30,9 +31,16 @@ import { EsgService } from '../../../core/services/esg.service';
     DataTableHeaderActionsDirective,
     DataTableRowActionsDirective,
     MenuModule,
+    BlockTypographyCardComponent,
   ],
   providers: [ConfirmationService],
   template: `
+    <app-block-typography-card
+      blockId="esg"
+      [elementKeys]="['diagramBadge', 'diagramTitle', 'diagramDesc']"
+      title="Vision Diagram Typography"
+      subtitle="Applied to the vision diagram badges and active-badge info on the public /esg page." />
+
     <app-data-table-wrapper
       title="ESG Vision Badges"
       entityName="badges"

@@ -20,6 +20,7 @@ import {
   FilterChip,
   BulkAction,
 } from '../../../shared/components/data-table-wrapper';
+import { BlockTypographyCardComponent } from '../../../shared/components/block-typography-card/block-typography-card.component';
 import { LabService, LabProjectListParams } from '../../../core/services/lab.service';
 import { MediaService } from '../../../core/services/media.service';
 import { LabProject, LabCategory } from '../../../core/models/lab.model';
@@ -40,9 +41,16 @@ import { LabProject, LabCategory } from '../../../core/models/lab.model';
     DataTableRowActionsDirective,
     DataTableFilterMenuDirective,
     MenuModule,
+    BlockTypographyCardComponent,
   ],
   providers: [ConfirmationService],
   template: `
+    <app-block-typography-card
+      blockId="lab-list"
+      [elementKeys]="['cardTitle', 'cardDescription', 'cardTag']"
+      title="Project Card Typography"
+      subtitle="Applied to every project card on the public /lab list page." />
+
     <app-data-table-wrapper
       title="Lab Projects"
       entityName="projects"

@@ -14,6 +14,7 @@ import {
   DataTableRowActionsDirective,
   DataTableColumn,
 } from '../../../shared/components/data-table-wrapper';
+import { BlockTypographyCardComponent } from '../../../shared/components/block-typography-card/block-typography-card.component';
 import { LabService } from '../../../core/services/lab.service';
 import { LabCategory } from '../../../core/models/lab.model';
 
@@ -30,9 +31,16 @@ import { LabCategory } from '../../../core/models/lab.model';
     DataTableHeaderActionsDirective,
     DataTableRowActionsDirective,
     MenuModule,
+    BlockTypographyCardComponent,
   ],
   providers: [ConfirmationService],
   template: `
+    <app-block-typography-card
+      blockId="lab-list"
+      [elementKeys]="['filter']"
+      title="Filter Button Typography"
+      subtitle="Applied to category filter buttons on the public /lab list page." />
+
     <app-data-table-wrapper
       title="Lab Categories"
       entityName="categories"

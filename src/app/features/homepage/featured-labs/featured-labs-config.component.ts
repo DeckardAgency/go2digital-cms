@@ -13,6 +13,7 @@ import { TextareaModule } from 'primeng/textarea';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { SettingsService, Setting } from '../../../core/services/settings.service';
+import { BlockTypographyCardComponent } from '../../../shared/components/block-typography-card/block-typography-card.component';
 import { environment } from '../../../../environments/environment';
 
 interface LabProject {
@@ -36,7 +37,8 @@ interface FeaturedLabsConfig {
   standalone: true,
   imports: [
     CommonModule, FormsModule, ButtonModule, ToggleSwitchModule,
-    TableModule, TagModule, CheckboxModule, InputTextModule, TextareaModule, ToastModule
+    TableModule, TagModule, CheckboxModule, InputTextModule, TextareaModule, ToastModule,
+    BlockTypographyCardComponent,
   ],
   providers: [MessageService],
   template: `
@@ -127,6 +129,8 @@ interface FeaturedLabsConfig {
 
         </div><!-- end right col -->
       </div><!-- end grid -->
+
+      <app-block-typography-card blockId="featured-labs" />
 
       <!-- Manual Selection (only shown when auto mode is OFF) -->
       @if (!autoMode()) {

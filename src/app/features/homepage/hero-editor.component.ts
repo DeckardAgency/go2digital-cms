@@ -2,21 +2,24 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { ProgressSpinner } from 'primeng/progressspinner';
 import { TranslationEditorComponent } from '../../shared/components/translation-editor/translation-editor.component';
+import { TypographyPresetFieldComponent } from '../../shared/components/typography-preset-field/typography-preset-field.component';
 import { HomepageService } from '../../core/services/homepage.service';
+import { TypographyService } from '../../core/services/typography.service';
 import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-hero-editor',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, ButtonModule,
-    ToastModule, ProgressSpinner, TranslationEditorComponent
+    CommonModule, FormsModule, ButtonModule, RouterLink,
+    ToastModule, ProgressSpinner, TranslationEditorComponent,
+    TypographyPresetFieldComponent,
   ],
   providers: [MessageService],
   template: `
@@ -57,6 +60,30 @@ import { environment } from '../../../environments/environment';
               [translations]="translations()"
               [fields]="translationFields"
               (translationsChange)="translations.set($event)" />
+          </div>
+
+          <!-- Typography Card -->
+          <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+            <div class="flex items-center justify-between mb-5">
+              <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0">Typography</h2>
+              <a
+                class="text-xs text-primary-600 hover:underline"
+                routerLink="/typography/presets"
+              >Manage presets →</a>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              @for (el of typographyElements; track el.key) {
+                <app-typography-preset-field
+                  [label]="el.label"
+                  [value]="typographyMap()[el.key]"
+                  [defaultSlug]="el.defaultSlug"
+                  (valueChange)="updateTypography(el.key, $event)"
+                />
+              }
+            </div>
+            <p class="text-[11px] text-surface-400 mt-3">
+              Leave a field blank to use the default preset. Changes here affect how this Hero section renders on the public site.
+            </p>
           </div>
 
           <!-- Videos Card -->
@@ -234,6 +261,7 @@ import { environment } from '../../../environments/environment';
 export class HeroEditorComponent implements OnInit {
   private http = inject(HttpClient);
   private messageService = inject(MessageService);
+  private typography = inject(TypographyService);
   router = inject(Router);
   private apiUrl = environment.apiUrl;
 
@@ -246,7 +274,16 @@ export class HeroEditorComponent implements OnInit {
     { key: 'scrollDownLabel', label: 'Scroll Down Label', type: 'text' as const },
   ];
 
+  typographyElements = [
+    { key: 'title', label: 'Title (Line 1 & 2)', defaultSlug: 'hero-title' },
+    { key: 'kicker', label: 'Kicker', defaultSlug: 'hero-kicker' },
+    { key: 'heading', label: 'Heading', defaultSlug: 'hero-heading' },
+    { key: 'description', label: 'Description', defaultSlug: 'hero-description' },
+    { key: 'scroll', label: 'Scroll Label', defaultSlug: 'hero-scroll' },
+  ];
+
   translations = signal<{ hr: Record<string, any>; en: Record<string, any> }>({ hr: {}, en: {} });
+  typographyMap = signal<Record<string, string | null>>({});
   saving = signal(false);
   desktopVideoUrl = signal('');
   mobileVideoUrl = signal('');
@@ -256,6 +293,7 @@ export class HeroEditorComponent implements OnInit {
   uploadingMobile = signal(false);
 
   ngOnInit(): void {
+    this.typography.loadAll().subscribe();
     this.loadData();
   }
 
@@ -265,15 +303,32 @@ export class HeroEditorComponent implements OnInit {
         if (hero.translations) {
           this.translations.set({ hr: hero.translations.hr || {}, en: hero.translations.en || {} });
         }
+        if (hero.typographyMap && typeof hero.typographyMap === 'object') {
+          this.typographyMap.set(hero.typographyMap);
+        }
         this.resolveVideo(hero.video, 'desktop');
         this.resolveVideo(hero.mobileVideo, 'mobile');
       }
     });
   }
 
+  updateTypography(key: string, slug: string | null): void {
+    this.typographyMap.update(m => {
+      const next = { ...m };
+      if (slug) next[key] = slug;
+      else delete next[key];
+      return next;
+    });
+  }
+
   save(): void {
     this.saving.set(true);
-    this.http.put(`${this.apiUrl}/singletons/homepage-hero`, { translations: this.translations() }).subscribe({
+    const map = this.typographyMap();
+    const payload: Record<string, unknown> = {
+      translations: this.translations(),
+      typographyMap: Object.keys(map).length > 0 ? map : null,
+    };
+    this.http.put(`${this.apiUrl}/singletons/homepage-hero`, payload).subscribe({
       next: () => {
         this.saving.set(false);
         this.messageService.add({ severity: 'success', summary: 'Saved', detail: 'Hero content updated' });

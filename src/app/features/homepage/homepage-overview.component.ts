@@ -33,6 +33,7 @@ interface HomepageSection {
           </p>
         </div>
         <div class="flex items-center gap-2">
+          <p-button label="Typography" icon="pi pi-font" severity="secondary" [outlined]="true" size="small" (onClick)="navigate('/typography/presets')" pTooltip="Manage typography presets" />
           @if (orderChanged()) {
             <p-button label="Reset" severity="secondary" [outlined]="true" size="small" (onClick)="resetOrder()" />
           }
@@ -107,6 +108,8 @@ export class HomepageOverviewComponent implements OnInit {
     { id: 'rentals-image', label: 'Rentals Image', description: 'Full-width section with text overlay', icon: 'pi pi-image', editRoute: '/homepage/rentals-image', type: 'singleton', color: '#64748b' },
     { id: 'possibilities', label: 'Possibilities', description: 'Scroll-through list of digital screen possibilities', icon: 'pi pi-list', editRoute: '/homepage/possibilities', type: 'collection', color: '#f59e0b' },
     { id: 'products', label: 'Products', description: 'Digital Citylight and Digital Screens products', icon: 'pi pi-box', editRoute: '/homepage/products', type: 'collection', color: '#a855f7' },
+    { id: 'interactive-display', label: 'Interactive Display', description: 'Interactive display specs and animated panels', icon: 'pi pi-desktop', editRoute: '/homepage/products', type: 'collection', color: '#7c3aed' },
+    { id: 'interactive-description', label: 'Interactive Description', description: 'Product description with features list', icon: 'pi pi-file-edit', editRoute: '/homepage/products', type: 'collection', color: '#6d28d9' },
   ];
 
   orderedSections = signal<HomepageSection[]>([]);

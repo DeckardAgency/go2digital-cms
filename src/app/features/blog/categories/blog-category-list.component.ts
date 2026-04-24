@@ -14,6 +14,7 @@ import {
   DataTableRowActionsDirective,
   DataTableColumn,
 } from '../../../shared/components/data-table-wrapper';
+import { BlockTypographyCardComponent } from '../../../shared/components/block-typography-card/block-typography-card.component';
 import { BlogService } from '../../../core/services/blog.service';
 import { BlogCategory } from '../../../core/models/blog.model';
 
@@ -30,9 +31,16 @@ import { BlogCategory } from '../../../core/models/blog.model';
     DataTableHeaderActionsDirective,
     DataTableRowActionsDirective,
     MenuModule,
+    BlockTypographyCardComponent,
   ],
   providers: [ConfirmationService],
   template: `
+    <app-block-typography-card
+      blockId="blog-list"
+      [elementKeys]="['filter']"
+      title="Filter Button Typography"
+      subtitle="Applied to category filter buttons on the public /blog list page." />
+
     <app-data-table-wrapper
       title="Blog Categories"
       entityName="categories"

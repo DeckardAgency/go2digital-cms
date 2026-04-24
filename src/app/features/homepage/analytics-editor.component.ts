@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
-import { SingletonEditorComponent, SingletonTranslatableField } from './singleton-editor.component';
+import { SingletonEditorComponent, SingletonTranslatableField, SingletonTypographyElement } from './singleton-editor.component';
 
 @Component({
   selector: 'app-analytics-editor',
@@ -13,7 +13,8 @@ import { SingletonEditorComponent, SingletonTranslatableField } from './singleto
       pageTitle="Analytics"
       subtitle="Impressions section with indicator, title, and description"
       [sectionPosition]="10"
-      [translatableFields]="fields">
+      [translatableFields]="fields"
+      [typographyElements]="typoElements">
       <div preview>
         <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
           <div class="flex items-center justify-between mb-4">
@@ -45,5 +46,13 @@ export class AnalyticsEditorComponent {
     { key: 'indicator', label: 'Indicator Text', type: 'text' },
     { key: 'title', label: 'Title', type: 'text' },
     { key: 'description', label: 'Description', type: 'textarea' },
+  ];
+
+  typoElements: SingletonTypographyElement[] = [
+    { key: 'indicator', label: 'Indicator', defaultSlug: 'eyebrow' },
+    { key: 'title', label: 'Title', defaultSlug: 'section-title-fluid' },
+    { key: 'description', label: 'Description', defaultSlug: 'body-lg-static' },
+    { key: 'tab', label: 'Tab Label', defaultSlug: 'eyebrow' },
+    { key: 'axisLabel', label: 'Axis Labels', defaultSlug: 'label-micro' },
   ];
 }

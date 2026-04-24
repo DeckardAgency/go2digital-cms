@@ -2,7 +2,7 @@ import { Component, Input, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { CheckboxModule } from 'primeng/checkbox';
@@ -11,7 +11,9 @@ import { MessageService } from 'primeng/api';
 
 import { TranslationEditorComponent } from '../../shared/components/translation-editor/translation-editor.component';
 import { ImageUploadComponent } from '../../shared/components/image-upload/image-upload.component';
+import { TypographyPresetFieldComponent } from '../../shared/components/typography-preset-field/typography-preset-field.component';
 import { HomepageService } from '../../core/services/homepage.service';
+import { TypographyService } from '../../core/services/typography.service';
 import { environment } from '../../../environments/environment';
 
 export interface SingletonTranslatableField {
@@ -31,18 +33,26 @@ export interface SingletonImageField {
   label: string;
 }
 
+export interface SingletonTypographyElement {
+  key: string;
+  label: string;
+  defaultSlug?: string;
+}
+
 @Component({
   selector: 'app-singleton-editor',
   standalone: true,
   imports: [
     CommonModule,
     FormsModule,
+    RouterLink,
     InputTextModule,
     InputNumberModule,
     CheckboxModule,
     ButtonModule,
     TranslationEditorComponent,
     ImageUploadComponent,
+    TypographyPresetFieldComponent,
   ],
   template: `
     <div class="space-y-6">
@@ -81,6 +91,27 @@ export interface SingletonImageField {
               [fields]="translatableFields"
               (translationsChange)="translations.set($event)" />
           </div>
+
+          <!-- Typography Card -->
+          @if (typographyElements?.length) {
+            <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+              <div class="flex items-center justify-between mb-5">
+                <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0">Typography</h2>
+                <a class="text-xs text-primary-600 hover:underline" routerLink="/typography/presets">Manage presets →</a>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                @for (el of typographyElements; track el.key) {
+                  <app-typography-preset-field
+                    [label]="el.label"
+                    [value]="typographyMap()[el.key]"
+                    [defaultSlug]="el.defaultSlug"
+                    (valueChange)="updateTypography(el.key, $event)"
+                  />
+                }
+              </div>
+              <p class="text-[11px] text-surface-400 mt-3">Leave a field blank to use its default preset.</p>
+            </div>
+          }
 
           <!-- Non-translatable Fields -->
           @if (nonTranslatableFields?.length) {
@@ -193,6 +224,7 @@ export class SingletonEditorComponent implements OnInit {
   @Input({ required: true }) pageTitle!: string;
   @Input({ required: true }) translatableFields!: SingletonTranslatableField[];
   @Input() nonTranslatableFields?: SingletonNonTranslatableField[];
+  @Input() typographyElements?: SingletonTypographyElement[];
   @Input() subtitle: string = '';
   @Input() sectionPosition: number = 0;
   @Input() backRoute: string = '/homepage';
@@ -203,6 +235,7 @@ export class SingletonEditorComponent implements OnInit {
   private readonly messageService = inject(MessageService);
   private readonly router = inject(Router);
   private readonly http = inject(HttpClient);
+  private readonly typography = inject(TypographyService);
 
   // Multi-image support
   imgUrlMap: Record<string, string> = {};
@@ -214,6 +247,8 @@ export class SingletonEditorComponent implements OnInit {
     hr: {},
     en: {},
   });
+
+  typographyMap = signal<Record<string, string | null>>({});
 
   nonTranslatableValues: Record<string, any> = {};
 
@@ -235,7 +270,19 @@ export class SingletonEditorComponent implements OnInit {
 
   ngOnInit(): void {
     this.initEmptyTranslations();
+    if (this.typographyElements?.length) {
+      this.typography.loadAll().subscribe();
+    }
     this.loadData();
+  }
+
+  updateTypography(key: string, slug: string | null): void {
+    this.typographyMap.update(m => {
+      const next = { ...m };
+      if (slug) next[key] = slug;
+      else delete next[key];
+      return next;
+    });
   }
 
   private initEmptyTranslations(): void {
@@ -265,6 +312,10 @@ export class SingletonEditorComponent implements OnInit {
           for (const field of this.nonTranslatableFields) {
             this.nonTranslatableValues[field.key] = data[field.key] ?? '';
           }
+        }
+
+        if (data.typographyMap && typeof data.typographyMap === 'object') {
+          this.typographyMap.set(data.typographyMap);
         }
 
         // Resolve images
@@ -347,6 +398,11 @@ export class SingletonEditorComponent implements OnInit {
       for (const field of this.nonTranslatableFields) {
         payload[field.key] = this.nonTranslatableValues[field.key];
       }
+    }
+
+    if (this.typographyElements?.length) {
+      const map = this.typographyMap();
+      payload.typographyMap = Object.keys(map).length > 0 ? map : null;
     }
 
     this.homepageService.updateSingleton(this.singletonType, payload).subscribe({

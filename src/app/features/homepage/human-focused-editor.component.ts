@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { SingletonEditorComponent, SingletonTranslatableField } from './singleton-editor.component';
+import { SingletonEditorComponent, SingletonTranslatableField, SingletonTypographyElement } from './singleton-editor.component';
 
 @Component({
   selector: 'app-human-focused-editor',
@@ -11,7 +11,8 @@ import { SingletonEditorComponent, SingletonTranslatableField } from './singleto
       pageTitle="Human Focused"
       subtitle="Indicator, title, and left/right text blocks"
       [sectionPosition]="7"
-      [translatableFields]="fields">
+      [translatableFields]="fields"
+      [typographyElements]="typoElements">
       <div preview>
         <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
           <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Preview</h2>
@@ -50,5 +51,12 @@ export class HumanFocusedEditorComponent {
     { key: 'title', label: 'Title', type: 'text' },
     { key: 'blockLeft', label: 'Block Left', type: 'textarea' },
     { key: 'blockRight', label: 'Block Right', type: 'textarea' },
+  ];
+
+  typoElements: SingletonTypographyElement[] = [
+    { key: 'indicator', label: 'Indicator', defaultSlug: 'eyebrow' },
+    { key: 'title', label: 'Title', defaultSlug: 'section-title' },
+    { key: 'blockHeading', label: 'Block Heading', defaultSlug: 'block-heading' },
+    { key: 'blockText', label: 'Block Text', defaultSlug: 'body-lg' },
   ];
 }

@@ -17,6 +17,7 @@ import {
   DataTableColumn,
   DataTableState,
 } from '../../../shared/components/data-table-wrapper';
+import { BlockTypographyCardComponent } from '../../../shared/components/block-typography-card/block-typography-card.component';
 import { HomepageService } from '../../../core/services/homepage.service';
 
 @Component({
@@ -33,6 +34,7 @@ import { HomepageService } from '../../../core/services/homepage.service';
     DataTableHeaderActionsDirective,
     DataTableRowActionsDirective,
     MenuModule,
+    BlockTypographyCardComponent,
   ],
   providers: [ConfirmationService],
   template: `
@@ -82,6 +84,8 @@ import { HomepageService } from '../../../core/services/homepage.service';
         </div>
       </div>
     </div>
+
+    <app-block-typography-card blockId="tracking" />
 
     <app-data-table-wrapper
       title=""

@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { SingletonEditorComponent, SingletonTranslatableField } from './singleton-editor.component';
+import { SingletonEditorComponent, SingletonTranslatableField, SingletonTypographyElement } from './singleton-editor.component';
 
 @Component({
   selector: 'app-text-animation-editor',
@@ -11,7 +11,8 @@ import { SingletonEditorComponent, SingletonTranslatableField } from './singleto
       pageTitle="Text Animation"
       subtitle="Three animated words with scroll effect"
       [sectionPosition]="8"
-      [translatableFields]="fields">
+      [translatableFields]="fields"
+      [typographyElements]="typoElements">
       <div preview>
         <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
           <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Preview</h2>
@@ -31,5 +32,9 @@ export class TextAnimationEditorComponent {
     { key: 'word1', label: 'Word 1', type: 'text' },
     { key: 'word2', label: 'Word 2', type: 'text' },
     { key: 'word3', label: 'Word 3', type: 'text' },
+  ];
+
+  typoElements: SingletonTypographyElement[] = [
+    { key: 'word', label: 'Animated Word', defaultSlug: 'display-huge' },
   ];
 }

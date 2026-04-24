@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { SingletonEditorComponent, SingletonTranslatableField } from './singleton-editor.component';
+import { SingletonEditorComponent, SingletonTranslatableField, SingletonTypographyElement } from './singleton-editor.component';
 
 @Component({
   selector: 'app-rentals-image-editor',
@@ -12,6 +12,7 @@ import { SingletonEditorComponent, SingletonTranslatableField } from './singleto
       subtitle="Full-width section with overlay text"
       [sectionPosition]="11"
       [translatableFields]="fields"
+      [typographyElements]="typoElements"
       imageField="image">
       <div preview>
         <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
@@ -28,5 +29,9 @@ import { SingletonEditorComponent, SingletonTranslatableField } from './singleto
 export class RentalsImageEditorComponent {
   fields: SingletonTranslatableField[] = [
     { key: 'text', label: 'Text', type: 'text' },
+  ];
+
+  typoElements: SingletonTypographyElement[] = [
+    { key: 'text', label: 'Overlay Text', defaultSlug: 'display-outline' },
   ];
 }

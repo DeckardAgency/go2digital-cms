@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { SingletonEditorComponent, SingletonTranslatableField } from './singleton-editor.component';
+import { SingletonEditorComponent, SingletonTranslatableField, SingletonTypographyElement } from './singleton-editor.component';
 
 @Component({
   selector: 'app-why-section-editor',
@@ -11,7 +11,8 @@ import { SingletonEditorComponent, SingletonTranslatableField } from './singleto
       pageTitle="Why Section"
       subtitle="Section header with label and headline"
       [sectionPosition]="3"
-      [translatableFields]="fields">
+      [translatableFields]="fields"
+      [typographyElements]="typoElements">
       <div preview>
         <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
           <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Preview</h2>
@@ -29,5 +30,14 @@ export class WhySectionEditorComponent {
   fields: SingletonTranslatableField[] = [
     { key: 'label', label: 'Label', type: 'text' },
     { key: 'headline', label: 'Headline', type: 'textarea' },
+  ];
+
+  typoElements: SingletonTypographyElement[] = [
+    { key: 'label', label: 'Label', defaultSlug: 'eyebrow-tight' },
+    { key: 'headline', label: 'Headline', defaultSlug: 'display-xl' },
+    { key: 'slideNumber', label: 'Slide Number', defaultSlug: 'display-stat' },
+    { key: 'slideTitle', label: 'Slide Title (Desktop)', defaultSlug: 'display-md' },
+    { key: 'slideTitleMobile', label: 'Slide Title (Mobile)', defaultSlug: 'body' },
+    { key: 'slideText', label: 'Slide Text', defaultSlug: 'body-sm' },
   ];
 }

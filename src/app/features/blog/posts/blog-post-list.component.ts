@@ -21,6 +21,7 @@ import {
   FilterChip,
   BulkAction,
 } from '../../../shared/components/data-table-wrapper';
+import { BlockTypographyCardComponent } from '../../../shared/components/block-typography-card/block-typography-card.component';
 import { BlogService, BlogPostListParams } from '../../../core/services/blog.service';
 import { MediaService } from '../../../core/services/media.service';
 import { BlogPost, BlogCategory } from '../../../core/models/blog.model';
@@ -32,10 +33,16 @@ import { BlogPost, BlogCategory } from '../../../core/models/blog.model';
     CommonModule, FormsModule, TagModule, ConfirmDialogModule, SelectModule,
     ButtonModule, TableModule, DataTableWrapperComponent, DataTableCellDirective,
     DataTableHeaderActionsDirective, DataTableRowActionsDirective,
-    DataTableFilterMenuDirective, MenuModule,
+    DataTableFilterMenuDirective, MenuModule, BlockTypographyCardComponent,
   ],
   providers: [ConfirmationService],
   template: `
+    <app-block-typography-card
+      blockId="blog-list"
+      [elementKeys]="['cardTitle', 'cardMeta', 'cardCategory']"
+      title="Post Card Typography"
+      subtitle="Applied to every post card on the public /blog list page." />
+
     @if (!reorderMode()) {
     <app-data-table-wrapper
       title="Blog Posts"

@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { SingletonEditorComponent, SingletonTranslatableField } from './singleton-editor.component';
+import { SingletonEditorComponent, SingletonTranslatableField, SingletonTypographyElement } from './singleton-editor.component';
 
 @Component({
   selector: 'app-custom-solution-editor',
@@ -11,7 +11,8 @@ import { SingletonEditorComponent, SingletonTranslatableField } from './singleto
       pageTitle="Custom Solution"
       subtitle="Indicator, title, and two content blocks"
       [sectionPosition]="5"
-      [translatableFields]="fields">
+      [translatableFields]="fields"
+      [typographyElements]="typoElements">
       <div preview>
         <div class="bg-surface-0 dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
           <h2 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Preview</h2>
@@ -46,5 +47,11 @@ export class CustomSolutionEditorComponent {
     { key: 'title', label: 'Title', type: 'text' },
     { key: 'block1', label: 'Block 1', type: 'textarea' },
     { key: 'block2', label: 'Block 2', type: 'textarea' },
+  ];
+
+  typoElements: SingletonTypographyElement[] = [
+    { key: 'indicator', label: 'Indicator', defaultSlug: 'eyebrow' },
+    { key: 'title', label: 'Title', defaultSlug: 'section-title' },
+    { key: 'blockText', label: 'Block Text', defaultSlug: 'body-lg' },
   ];
 }

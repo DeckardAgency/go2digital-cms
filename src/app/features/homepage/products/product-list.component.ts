@@ -15,6 +15,7 @@ import {
   DataTableColumn,
   DataTableState,
 } from '../../../shared/components/data-table-wrapper';
+import { BlockTypographyCardComponent } from '../../../shared/components/block-typography-card/block-typography-card.component';
 import { HomepageService } from '../../../core/services/homepage.service';
 
 @Component({
@@ -30,6 +31,7 @@ import { HomepageService } from '../../../core/services/homepage.service';
     DataTableHeaderActionsDirective,
     DataTableRowActionsDirective,
     MenuModule,
+    BlockTypographyCardComponent,
   ],
   providers: [ConfirmationService],
   template: `
@@ -43,6 +45,10 @@ import { HomepageService } from '../../../core/services/homepage.service';
       </div>
       <p-button label="New Product" icon="pi pi-plus" (onClick)="router.navigate(['/homepage/products/new'])" />
     </div>
+
+    <app-block-typography-card blockId="products" />
+    <app-block-typography-card blockId="interactive-display" />
+    <app-block-typography-card blockId="interactive-description" />
 
     <app-data-table-wrapper
       title=""
