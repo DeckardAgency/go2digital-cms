@@ -335,8 +335,8 @@ export class LabProjectFormComponent implements OnInit {
   projectId = signal<string | null>(null);
 
   translations = signal<{ hr: Record<string, any>; en: Record<string, any> }>({
-    hr: { title: '', subtitle: '', body: '', sections: [] },
-    en: { title: '', subtitle: '', body: '', sections: [] },
+    hr: { title: '', shortTitle: '', subtitle: '', body: '', sections: [] },
+    en: { title: '', shortTitle: '', subtitle: '', body: '', sections: [] },
   });
 
   activeSectionLocale = 'hr';
@@ -363,6 +363,7 @@ export class LabProjectFormComponent implements OnInit {
 
   translationFields = [
     { key: 'title', label: 'Title', type: 'text' as const },
+    { key: 'shortTitle', label: 'Short Title', type: 'text' as const },
     { key: 'subtitle', label: 'Subtitle', type: 'text' as const },
     { key: 'body', label: 'Intro Text', type: 'textarea' as const },
   ];
@@ -403,12 +404,14 @@ export class LabProjectFormComponent implements OnInit {
           this.translations.set({
             hr: {
               title: project.translations.hr?.title || '',
+              shortTitle: project.translations.hr?.shortTitle || '',
               subtitle: project.translations.hr?.subtitle || '',
               body: project.translations.hr?.body || '',
               sections: (project.translations.hr as any)?.sections || [],
             },
             en: {
               title: project.translations.en?.title || '',
+              shortTitle: project.translations.en?.shortTitle || '',
               subtitle: project.translations.en?.subtitle || '',
               body: project.translations.en?.body || '',
               sections: (project.translations.en as any)?.sections || [],
