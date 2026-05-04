@@ -120,6 +120,7 @@ export const routes: Routes = [
       // Settings
       { path: 'settings', redirectTo: 'settings/general', pathMatch: 'full' },
       { path: 'settings/pdf-layout', loadComponent: () => import('./features/settings/pdf-layout-builder.component').then(m => m.PdfLayoutBuilderComponent) },
+      { path: 'settings/translations', loadComponent: () => import('./features/translations/translations-page.component').then(m => m.TranslationsPageComponent) },
       { path: 'settings/:section', loadComponent: () => import('./features/settings/settings-page.component').then(m => m.SettingsPageComponent) },
       // Contact
       { path: 'contact/info', loadComponent: () => import('./features/contact/contact-info-list.component').then(m => m.ContactInfoListComponent) },
